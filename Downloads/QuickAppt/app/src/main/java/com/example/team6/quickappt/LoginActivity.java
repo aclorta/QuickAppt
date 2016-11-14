@@ -62,6 +62,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View mProgressView;
     private View mLoginFormView;
 
+    private QADBHelper mDB;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,6 +94,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+        mDB = new QADBHelper(this);
+        mDB.open();
     }
 
     private void populateAutoComplete() {
@@ -148,6 +153,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             return;
         }
 
+        /* Our only two users in the database are: {hello, world} and {foobar, barfoo} */
+
         // Reset errors.
         mEmailView.setError(null);
         mPasswordView.setError(null);
@@ -171,8 +178,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mEmailView.setError(getString(R.string.error_field_required));
             focusView = mEmailView;
             cancel = true;
-        } else if (!isEmailValid(email)) {
+
+        } else if (/* !isEmailValid(email) */ !isUsernameValid(email)) {   // Christian: Are we using e-mail or username?
             mEmailView.setError(getString(R.string.error_invalid_email));
+            focusView = mEmailView;
+            cancel = true;
+        } else if (!mDB.userExists(email)) {
+            mEmailView.setError(getString(R.string.error_invalid_user));
+            focusView = mEmailView;
+            cancel = true;
+        } else if (!mDB.loginValid(email, password)) {
+            mEmailView.setError(getString(R.string.error_invalid_login));
             focusView = mEmailView;
             cancel = true;
         }
@@ -186,13 +202,20 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // perform the user login attempt.
             showProgress(true);
             mAuthTask = new UserLoginTask(email, password);
+
+            System.out.println("Successfully logged in! User ID = " + mDB.getUserID(email));
             mAuthTask.execute((Void) null);
+            mDB.close();
         }
     }
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
         return email.contains("@");
+    }
+    private boolean isUsernameValid(String username) {
+        //TODO: Replace this with your own logic
+        return username.length() > 3 || isEmailValid(username);
     }
 
     private boolean isPasswordValid(String password) {
