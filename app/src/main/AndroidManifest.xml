@@ -22,7 +22,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".HomeScreen"></activity>
     </application>
 
 </manifest>
 <!-- Creating a comment from Login-Screen -->
+<!-- Text from HomeScreen -->
