@@ -29,6 +29,11 @@
             android:name=".HomeScreen">
         </activity>
 
+        <!-- Search activity -->
+        <activity
+            android:name=".SearchActivity">
+        </activity>
+
     </application>
 
 </manifest>
