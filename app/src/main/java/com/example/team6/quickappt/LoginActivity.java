@@ -203,7 +203,18 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(true);
             mAuthTask = new UserLoginTask(email, password);
 
-            System.out.println("Successfully logged in! User ID = " + mDB.getUserID(email));
+            long userID = mDB.getUserID(email);
+            System.out.println("Successfully logged in! User ID = " + userID);
+            if (mDB.isPatient(userID)) {
+                System.out.println("Info for patient = " + mDB.getPatientInfo(userID));
+            }
+            else if (mDB.isPhysician(userID)) {
+                System.out.println("Info for physician = " + mDB.getPhysicianInfo(userID));
+            }
+            else {
+                System.out.println("Could not get info for user");
+            }
+
             mAuthTask.execute((Void) null);
             mDB.close();
         }

@@ -7,11 +7,14 @@ Implemented
     - if password was wrong
 
 
+(11/16)
+- Added new table for patient medical history
+- Created methods for adding, retrieiving patient info
+
 
 
 To implement
 -------------
-- Add new row onto patient for medical history
 - Add new DB hooks onto different activities into app
     - Select the nearest physicians based on ZIP-CODE and SYMPTOMS/SPECIALIZATIONS
         - Columns should be Zip code of physician, Distance from inputted zip code
