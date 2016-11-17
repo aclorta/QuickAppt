@@ -10,9 +10,14 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import android.util.Pair;
 
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.text.ParsePosition;
 
 public class QADBHelper
 {
@@ -28,13 +33,14 @@ public class QADBHelper
                     + "isbn text not null, title text not null, "
                     + "publisher text not null);\n";
 
-    private final Context context;
 
+    private final Context context;
     private DatabaseHelper DBHelper;
     private SQLiteDatabase db;
     private QADatabaseStrings dbStrings;
-
     private PasswordCrypter crypter;
+    private SimpleDateFormat dateFormatter;
+    private GregorianCalendar calendar;
 
     public QADBHelper(Context ctx)
     {
@@ -42,6 +48,8 @@ public class QADBHelper
         dbStrings = new QADatabaseStrings();
         DBHelper = new DatabaseHelper(context, dbStrings);
         crypter = new PasswordCrypter();
+        dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        calendar = new GregorianCalendar();
 
 
         /* TODO: delete this line if we plan on NOT using a fresh database on startup. */
@@ -99,6 +107,45 @@ public class QADBHelper
                 result += (char) (c - 2);
             }
             return result;
+        }
+    }
+
+    public class PatientAppointmentInfo
+    {
+        public long physicianID;
+        public Date startDateTime;
+        public Date endDateTime;
+
+        public PatientAppointmentInfo(long id, Date start, Date end) {
+            physicianID = id;
+            startDateTime = start;
+            endDateTime = end;
+        }
+
+        @Override
+        public String toString() {
+            return "PatientAppointmentInfo{ PhysicianID: " + physicianID +
+                                            ", StartDateTime: " + startDateTime +
+                                            ", EndDateTime: " + endDateTime + " }";
+        }
+    }
+    public class PhysicianAppointmentInfo
+    {
+        public long patientID;
+        public Date startDateTime;
+        public Date endDateTime;
+
+        public PhysicianAppointmentInfo(long id, Date start, Date end) {
+            patientID = id;
+            startDateTime = start;
+            endDateTime = end;
+        }
+
+        @Override
+        public String toString() {
+            return "PhysicianAppointmentInfo{ PatientID: " + patientID +
+                    ", StartDateTime: " + startDateTime +
+                    ", EndDateTime: " + endDateTime + " }";
         }
     }
 
@@ -354,6 +401,7 @@ public class QADBHelper
             result.put("Medications", "");
             result.put("Surgeries", "");
 
+            // Get the medical history for the patient
             if (medicalHistoryCursor != null && medicalHistoryCursor.moveToFirst()) {
                 result.put("Allergies", medicalHistoryCursor.getString(0));
                 result.put("Medications", medicalHistoryCursor.getString(1));
@@ -477,6 +525,7 @@ public class QADBHelper
     }
 
 
+
     /*---------- Specializations Table methods ----------*/
     /*
     Adds a specialization for a physician (by ID) into the database.
@@ -486,11 +535,12 @@ public class QADBHelper
     {
         ContentValues initialValues = new ContentValues();
         initialValues.put(dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID, id);
-        initialValues.put(dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_ATTR_SPECIALIZATION, specialization);
+        initialValues.put(dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION, specialization);
 
         // Insert into specialization database, return the User ID of physician
         return db.insert(dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_NAME, null, initialValues);
     }
+
     /*
     Returns a list of all the specializations for a given physician (by id).
      */
@@ -500,7 +550,7 @@ public class QADBHelper
             return null;
 
         String[] projection = {
-                dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_ATTR_SPECIALIZATION
+                dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION
         };
 
         String selection = dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID + " = ?";
@@ -518,12 +568,185 @@ public class QADBHelper
                         null
                 );
         if (mCursor != null && mCursor.moveToFirst()) {
+            result.add(mCursor.getString(0));
             while (mCursor.moveToNext()) {
                 result.add(mCursor.getString(0));
             }
         }
         return result;
     }
+
+    /*
+    Returns a list of all the physicians with a given specialization.
+    Each list is a map containing information for each physician, which was taken from the
+        getPhysicianInfo(id) method.
+    Returns null if no physicians found.
+    */
+    public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization)
+    {
+        String[] projection = {
+                dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID
+        };
+
+        String selection = dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION + " = ?";
+        String[] selectionArgs = { specialization };
+        ArrayList<HashMap<String,String>> result;
+
+        Cursor mCursor =
+                db.query(
+                        dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        null
+                );
+        if (mCursor != null && mCursor.moveToFirst()) {
+            result = new ArrayList<HashMap<String,String>>();
+
+            result.add(getPhysicianInfo(mCursor.getLong(0)));
+
+            while (mCursor.moveToNext()) {
+                result.add(getPhysicianInfo(mCursor.getLong(0)));
+            }
+            return result;
+        }
+        return null;
+    }
+
+
+
+
+    /*---------- Appointment Table methods ----------*/
+    /*
+    Adds an appointment to the database for a given patient ID, physician ID, and time slot.
+    Returns the row inserted on the Appointment table.
+
+    Returns -1 if there was an error creating the appointment (eg. gave patient ID for physicianID parameter).
+     */
+    public long addAppointment(long patientID, long physicianID,
+                               int startYear, int startMonth, int startDay, int startHour, int startMinute,
+                               int endYear, int endMonth, int endDay, int endHour, int endMinute)
+    {
+        if (!isPatient(patientID) || !isPhysician(physicianID))
+            return -1;
+
+
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID, patientID);
+        initialValues.put(dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID, physicianID);
+
+        String startDateTime = startYear + "-" + startMonth + "-" + startDay + " " + startHour + ":" + startMinute + ":00",
+                endDateTime = endYear + "-" + endMonth + "-" + endDay + " " + endHour + ":" + endMinute + ":00";
+
+        // Set the start and end-date format for the the column in the table
+        Date startDate = dateFormatter.parse(startDateTime, new ParsePosition(0)),
+             endDate = dateFormatter.parse(endDateTime, new ParsePosition(0));
+
+        // Put the UNIX timestamp of start/end date into database
+        initialValues.put(dbStrings.APPOINTMENT_TABLE_KEY_START_TIME, startDate.getTime());
+        initialValues.put(dbStrings.APPOINTMENT_TABLE_ATTR_END_TIME, endDate.getTime());
+
+        return db.insert(dbStrings.APPOINTMENT_TABLE_NAME, null, initialValues);
+    }
+
+    /*
+    Returns a sorted list of appointments (from earliest to latest) for a patient given his/her ID.
+    Returns empty list if no appointments listed for a patient.
+    Returns null if ID did not belong to a patient.
+     */
+    public ArrayList<PatientAppointmentInfo> getAppointmentsForPatient(long patientID)
+    {
+        if (!isPatient(patientID))
+            return null;
+
+        ArrayList<PatientAppointmentInfo> result = new ArrayList<PatientAppointmentInfo>();
+        String[] projection = { dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID,
+                                dbStrings.APPOINTMENT_TABLE_KEY_START_TIME,
+                                dbStrings.APPOINTMENT_TABLE_ATTR_END_TIME
+        };
+
+        String selection = dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID + " = ?";
+        String[] selectionArgs = { Long.toString(patientID) };
+        String orderBy = dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " ASC";
+
+        Cursor mCursor =
+                db.query(
+                        dbStrings.APPOINTMENT_TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        orderBy
+                );
+
+        if (mCursor != null && mCursor.moveToFirst()) {
+            long id = mCursor.getLong(0);
+            Date startDateTime = new Date(mCursor.getLong(1));
+            Date endDateTime = new Date(mCursor.getLong(2));
+
+            result.add(new PatientAppointmentInfo(id, startDateTime, endDateTime));
+
+            while (mCursor.moveToNext()) {
+                id = mCursor.getLong(0);
+                startDateTime = new Date(mCursor.getLong(1));
+                endDateTime = new Date(mCursor.getLong(2));
+                result.add(new PatientAppointmentInfo(id, startDateTime, endDateTime));
+            }
+        }
+        return result;
+    }
+
+    /*
+    Returns a sorted list of appointments (from earliest to latest) for a physician given his/her ID.
+    Returns empty list if no appointments listed for a physician.
+    Returns null if ID did not belong to a physician.
+     */
+    public ArrayList<PhysicianAppointmentInfo> getAppointmentsForPhysician(long physicianID)
+    {
+        if (!isPhysician(physicianID))
+            return null;
+
+        ArrayList<PhysicianAppointmentInfo> result = new ArrayList<PhysicianAppointmentInfo>();
+        String[] projection = { dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID,
+                dbStrings.APPOINTMENT_TABLE_KEY_START_TIME,
+                dbStrings.APPOINTMENT_TABLE_ATTR_END_TIME
+        };
+
+        String selection = dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + " = ?";
+        String[] selectionArgs = { Long.toString(physicianID) };
+        String orderBy = dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " ASC";
+
+        Cursor mCursor =
+                db.query(
+                        dbStrings.APPOINTMENT_TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        orderBy
+                );
+
+        if (mCursor != null && mCursor.moveToFirst()) {
+            long patientID = mCursor.getLong(0);
+            Date startDateTime = new Date(mCursor.getLong(1));
+            Date endDateTime = new Date(mCursor.getLong(2));
+
+            result.add(new PhysicianAppointmentInfo(patientID, startDateTime, endDateTime));
+
+            while (mCursor.moveToNext()) {
+                patientID = mCursor.getLong(0);
+                startDateTime = new Date(mCursor.getLong(1));
+                endDateTime = new Date(mCursor.getLong(2));
+                result.add(new PhysicianAppointmentInfo(patientID, startDateTime, endDateTime));
+            }
+        }
+        return result;
+    }
+
 
 
 
@@ -588,7 +811,8 @@ public class QADBHelper
     private void addTestData()
     {
         // Add the user Alice Wonderland, with Username "Alice123" and Password "Alice123"
-        addPatient("Alice123", "Alice123",                  // Username, password
+        addPatient("Alice123",                              // Username
+                "Alice123",                                 // Password
                 "Alice Wonderland",                         // Name
                 "F",                                        // Gender (Female)
                 "January 1, 1990",                          // Birth Date
@@ -606,7 +830,8 @@ public class QADBHelper
                 "Patrick Star"                              // Eye Doctor Name
         );
         // Add the user Bob Builder, with Username "Bob456" and Password "Bob456"
-        addPatient("Bob456", "Bob456",
+        addPatient("Bob456",
+                "Bob456",
                 "Bob Builder",
                 "M",
                 "February 23, 1954",
@@ -625,7 +850,8 @@ public class QADBHelper
         );
 
         // Add the physician Christian Morte into database
-        addPhysician("Christian123", "Christian123",
+        addPhysician("Christian123",
+                        "Christian123",
                         "Christian Morte",
                         "M",
                         "4082345678",
@@ -633,13 +859,37 @@ public class QADBHelper
                         "1234 One Road San Jose, CA 95131",
                         new String[]{"Cardiologist", "Exercise Specialist"});
         // Add the physician Adam Lorta into database
-        addPhysician("Adam123", "Adam123",
+        addPhysician("Adam123",
+                    "Adam123",
                 "Adam Lorta",
                 "M",
                 "1230987654",
                 "adam@gmail.com",
                 "86743 Two Street San Francisco, CA 12345",
-                new String[]{"Optometrist", "Physical Therapist"});
+                new String[]{"Cardiologist", "Physical Therapist"});
+        addPhysician("Crystal456",
+                "Crystal456",
+                "Crystal Yee",
+                "F",
+                "1230987654",
+                "crystal@gmail.com",
+                "86743 Thhree Street Santa Clara, CA 12345",
+                new String[]{"Cardiologist"});
+
+        addAppointment(1,               // Patient: Alice
+                3,                      // Physician: Christian
+                2016, 5, 4, 12, 30,      // Start Date Time: May 4, 2016 12:30 PM
+                2016, 5, 4, 1, 30);     // End Date Time: May 4, 2016, 1:30 PM
+        addAppointment(1,               // Patient: Alice
+                4,                      // Physician: Adam
+                2016, 5, 6, 15, 30,      // Start Date Time: May 6, 2016 3:30 PM
+                2016, 5, 6, 16, 30);     // End Date Time: May 6, 2016, 4:30 PM
+
+        /* THIS SHOULD NOT WORK */
+        addAppointment(3,               // Patient: Christian (SHOULD NOT WORK)
+                4,                      // Physician: Adam
+                2016, 5, 4, 12, 30,      // Start Date Time: May 4, 2016 12:30 PM
+                2016, 5, 4, 1, 30);     // End Date Time: May 4, 2016, 1:30 PM
     }
 
 
