@@ -25,15 +25,15 @@ public class HomeScreen extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_screen);
 
-        btnClick = (Button) findViewById(R.id.edit_btn);
-        /** Edit Button sends user to Profile activity; need to update name */
-
-        btnClick.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(HomeScreen.this, profileActivity.class));
-            }
-        });
+//        btnClick = (Button) findViewById(R.id.edit_btn);
+//        /** Edit Button sends user to Profile activity; need to update name */
+//
+//        btnClick.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                startActivity(new Intent(HomeScreen.this, profileActivity.class));
+//            }
+//        });
 
         btnClick = (Button) findViewById(R.id.search_btn);
         /** Search Button sends user to Search activity; need to update name */
@@ -41,7 +41,7 @@ public class HomeScreen extends AppCompatActivity {
         btnClick.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(HomeScreen.this, searchAct.class));
+                startActivity(new Intent(HomeScreen.this, SearchActivity.class));
             }
         });
 
@@ -55,15 +55,15 @@ public class HomeScreen extends AppCompatActivity {
             }
         });
 
-        btnClick = (Button) findViewById(R.id.history_btn);
-        /** History Button sends user to History activity; need to update name */
-
-        btnClick.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(HomeScreen.this, historyActivity.class));
-            }
-        });
+//        btnClick = (Button) findViewById(R.id.history_btn);
+//        /** History Button sends user to History activity; need to update name */
+//
+//        btnClick.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                startActivity(new Intent(HomeScreen.this, historyActivity.class));
+//            }
+//        });
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
