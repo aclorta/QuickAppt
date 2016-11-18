@@ -167,7 +167,7 @@ public class QADBHelper
         db.execSQL(dbStrings.PATIENT_MEDICAL_HISTORY_TABLE_CREATE);
 
         // Add null user into database
-        addPatient(0,"","","","","","","","","","","","","","","");
+        addPatient(0,"","",getDate(0,0,0),"","","","","","","","","","","","","");
 
         addTestData();
         return this;
@@ -268,6 +268,9 @@ public class QADBHelper
         return mCursor.getLong(0);
     }
 
+
+
+    /*---------- Patient Table methods ----------*/
     /*
     Returns true if a given patient ID is a null patient (for time slot blockages).
      */
@@ -276,16 +279,16 @@ public class QADBHelper
         return patientID == 0;
     }
 
-    /*---------- Patient Table methods ----------*/
     /*
     Adds patient information into database.
     Returns the User ID for a patient.
 
     This should be called after a patient has completed the sign up process.
      */
-    public long addPatient(long id, String name, String gender, String birthDate, String maritalStatus,
+    public long addPatient(long id, String name, String gender, Date birthDate, String maritalStatus,
                            String phone, String email, String location,
-                           String occupation, String regularExerciser,
+                           String occupation,
+                           String tobaccoSmoker, String regularExerciser,
                            String allergies, String medications, String surgeries,
                            String physicianName, String dentistName, String eyeDoctorName)
     {
@@ -294,12 +297,13 @@ public class QADBHelper
         initialValues.put(dbStrings.PATIENT_TABLE_KEY_ID, id);
         initialValues.put(dbStrings.PATIENT_TABLE_ATTR_NAME, name);
         initialValues.put(dbStrings.PATIENT_TABLE_ATTR_GENDER, gender);
-        initialValues.put(dbStrings.PATIENT_TABLE_ATTR_BIRTH, birthDate);
+        initialValues.put(dbStrings.PATIENT_TABLE_ATTR_BIRTH, birthDate.toString());
         initialValues.put(dbStrings.PATIENT_TABLE_ATTR_MARITAL_STATUS, maritalStatus);
         initialValues.put(dbStrings.PATIENT_TABLE_ATTR_OCCUPATION, occupation);
         initialValues.put(dbStrings.PATIENT_TABLE_ATTR_PHONE, phone);
         initialValues.put(dbStrings.PATIENT_TABLE_ATTR_EMAIL, email);
         initialValues.put(dbStrings.PATIENT_TABLE_ATTR_LOCATION, location);
+        initialValues.put(dbStrings.PATTIENT_TABLE_ATTR_TOBACCO_SMOKER, tobaccoSmoker);
         initialValues.put(dbStrings.PATIENT_TABLE_ATTR_REGULAR_EXERCISER, regularExerciser);
         initialValues.put(dbStrings.PATIENT_TABLE_ATTR_PHYSICIAN_NAME, physicianName);
         initialValues.put(dbStrings.PATIENT_TABLE_ATTR_DENTIST_NAME, dentistName);
@@ -308,7 +312,8 @@ public class QADBHelper
         // Insert into database, return the User ID of patient
         long result = db.insert(dbStrings.PATIENT_TABLE_NAME, null, initialValues);
 
-        initialValues.clear();
+        initialValues = new ContentValues();
+        initialValues.put(dbStrings.PATIENT_MEDICAL_HISTORY_TABLE_KEY_ID, id);
         initialValues.put(dbStrings.PATIENT_MEDICAL_HISTORY_TABLE_ATTR_ALLERGIES, allergies);
         initialValues.put(dbStrings.PATIENT_MEDICAL_HISTORY_TABLE_ATTR_MEDICATIONS, medications);
         initialValues.put(dbStrings.PATIENT_MEDICAL_HISTORY_TABLE_ATTR_SURGERIES, surgeries);
@@ -318,16 +323,17 @@ public class QADBHelper
     }
 
     public long addPatient(String username, String password,
-                           String name, String gender, String birthDate, String maritalStatus,
+                           String name, String gender, Date birthDate, String maritalStatus,
                            String phone, String email, String location,
-                           String occupation, String regularExerciser,
+                           String occupation,
+                           String tobaccoSmoker, String regularExerciser,
                            String allergies, String medications, String surgeries,
                            String physicianName, String dentistName, String eyeDoctorName)
     {
         return addPatient(addUser(username, password),
                             name, gender, birthDate, maritalStatus,
                             phone, email, location,
-                            occupation, regularExerciser,
+                            occupation, tobaccoSmoker, regularExerciser,
                             allergies, medications, surgeries,
                             physicianName, dentistName, eyeDoctorName);
     }
@@ -352,7 +358,7 @@ public class QADBHelper
 
     This should be called whenever you need to display specific patient information on a screen.
      */
-    public HashMap getPatientInfo(long id)
+    public HashMap<String,String> getPatientInfo(long id)
     {
         HashMap<String,String> result;
 
@@ -840,12 +846,13 @@ public class QADBHelper
                 "Alice123",                                 // Password
                 "Alice Wonderland",                         // Name
                 "F",                                        // Gender (Female)
-                "January 1, 1990",                          // Birth Date
+                getDate(1990, 1, 2),                        // Birth Date
                 "Married",                                  // Marital status
                 "1234567890",                               // Phone-number
                 "alice@wonderland.com",                     // Email
                 "1234 Example Street Irvine, CA 92617",     // Location
                 "Software Engineer",                        // Occupation
+                "Y",                                        // Tobacco Smoker ?
                 "N",                                        // Regular Exerciser?
                 "Ibuprofen, dust",                          // Allergies
                 "N/A",                                      // Medications
@@ -859,12 +866,13 @@ public class QADBHelper
                 "Bob456",
                 "Bob Builder",
                 "M",
-                "February 23, 1954",
+                getDate(1954, 2, 24),
                 "Single",
                 "9285749483",
                 "bob@builder.com",
                 "789 Anteater Drive Irvine, CA 92617",
                 "Construction Worker",
+                "N",
                 "Y",
                 "N/A",
                 "Viagra",
@@ -954,6 +962,11 @@ public class QADBHelper
     public Date getDate(int year, int month, int day, int hour, int minute)
     {
         String dateTime = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":00";
+        return dateFormatter.parse(dateTime, new ParsePosition(0));
+    }
+    public Date getDate(int year, int month, int day)
+    {
+        String dateTime = year + "-" + month + "-" + day + " " + "00:00:00";
         return dateFormatter.parse(dateTime, new ParsePosition(0));
     }
 
