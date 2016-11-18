@@ -31,6 +31,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -207,12 +208,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             System.out.println("Successfully logged in! User ID = " + userID);
             if (mDB.isPatient(userID)) {
                 System.out.println("Info for patient = " + mDB.getPatientInfo(userID));
-                System.out.println("Appointments for patient = " + mDB.getAppointmentsForPatient(userID));
+                System.out.println("All appointments for patient = " + mDB.getAllAppointmentsForPatient(userID));
+                System.out.println("Upcoming appointments for patient = " + mDB.getUpcomingAppointmentsForPatient(userID));
             }
             else if (mDB.isPhysician(userID)) {
                 System.out.println("Info for physician = " + mDB.getPhysicianInfo(userID));
                 System.out.println("Physicians with specialization 'Cardiologist' = " + mDB.getPhysiciansWithSpecialization("Cardiologist"));
-                System.out.println("Appointments for physician = " + mDB.getAppointmentsForPhysician(userID));
+                System.out.println("All appointments for physician = " + mDB.getAllAppointmentsForPhysician(userID));
+                System.out.println("Upcoming appointments for physician = " + mDB.getUpcomingAppointmentsForPhysician(userID));
 
             }
             else {

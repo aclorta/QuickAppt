@@ -10,7 +10,6 @@ public class QADatabaseStrings {
     public final String USER_TABLE_NAME = "UserLogin",
             USER_TABLE_KEY_ROWID = "_id",
             USER_TABLE_ATTR_USERNAME = "username",
-            USER_TABLE_ATTR_PASSWORD = "username",
             USER_TABLE_CREATE =
                     "CREATE TABLE IF NOT EXISTS " + USER_TABLE_NAME +  " (" +
                             "  " + USER_TABLE_KEY_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT," +

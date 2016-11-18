@@ -166,6 +166,9 @@ public class QADBHelper
         db.execSQL(dbStrings.APPOINTMENT_TABLE_CREATE);
         db.execSQL(dbStrings.PATIENT_MEDICAL_HISTORY_TABLE_CREATE);
 
+        // Add null user into database
+        addPatient(0,"","","","","","","","","","","","","","","");
+
         addTestData();
         return this;
     }
@@ -265,7 +268,13 @@ public class QADBHelper
         return mCursor.getLong(0);
     }
 
-
+    /*
+    Returns true if a given patient ID is a null patient (for time slot blockages).
+     */
+    public boolean isNullPatient(long patientID)
+    {
+        return patientID == 0;
+    }
 
     /*---------- Patient Table methods ----------*/
     /*
@@ -625,11 +634,11 @@ public class QADBHelper
 
     Returns -1 if there was an error creating the appointment (eg. gave patient ID for physicianID parameter).
      */
-    public long addAppointment(long patientID, long physicianID,
-                               int startYear, int startMonth, int startDay, int startHour, int startMinute,
-                               int endYear, int endMonth, int endDay, int endHour, int endMinute)
+    public long addAppointment(long patientID, long physicianID, Date startDate, Date endDate)
     {
-        if (!isPatient(patientID) || !isPhysician(physicianID))
+        if (!isPatient(patientID) || !isPhysician(physicianID))     // Wrong user ID's given
+            return -1;
+        if (endDate.before(startDate))                              // End date is before start Date
             return -1;
 
 
@@ -637,117 +646,131 @@ public class QADBHelper
         initialValues.put(dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID, patientID);
         initialValues.put(dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID, physicianID);
 
-        String startDateTime = startYear + "-" + startMonth + "-" + startDay + " " + startHour + ":" + startMinute + ":00",
-                endDateTime = endYear + "-" + endMonth + "-" + endDay + " " + endHour + ":" + endMinute + ":00";
-
-        // Set the start and end-date format for the the column in the table
-        Date startDate = dateFormatter.parse(startDateTime, new ParsePosition(0)),
-             endDate = dateFormatter.parse(endDateTime, new ParsePosition(0));
-
         // Put the UNIX timestamp of start/end date into database
         initialValues.put(dbStrings.APPOINTMENT_TABLE_KEY_START_TIME, startDate.getTime());
         initialValues.put(dbStrings.APPOINTMENT_TABLE_ATTR_END_TIME, endDate.getTime());
 
         return db.insert(dbStrings.APPOINTMENT_TABLE_NAME, null, initialValues);
     }
+    public long addAppointment(long patientID, long physicianID,
+                               int startYear, int startMonth, int startDay, int startHour, int startMinute,
+                               int endYear, int endMonth, int endDay, int endHour, int endMinute)
+    {
+        return addAppointment(patientID,
+                            physicianID,
+                            getDate(startYear, startMonth, startDay, startHour, startMinute),   // Start DateTime
+                            getDate(endYear, endMonth, endDay, endHour, endMinute)              // End DateTime
+        );
+    }
 
     /*
-    Returns a sorted list of appointments (from earliest to latest) for a patient given his/her ID.
+    Adds a timeslot block (masked as an Appointment) to the database for a given physician ID and time slot.
+    Returns the row inserted on the Appointment table.
+
+    Returns -1 if there was an error creating the appointment (eg. physician doesn't exist, etc.).
+     */
+    public long addTimeBlockForPhysician(long physicianID, Date startDateTime, Date endDateTime)
+    {
+        return addAppointment(0, physicianID, startDateTime, endDateTime);
+    }
+
+    /*
+    Returns a sorted list of ALL appointments (from earliest to latest) for a patient given his/her ID.
+        Each appointment has:
+            - Physician ID
+            - Start date/time
+            - End date/time
     Returns empty list if no appointments listed for a patient.
     Returns null if ID did not belong to a patient.
      */
-    public ArrayList<PatientAppointmentInfo> getAppointmentsForPatient(long patientID)
+    public ArrayList<PatientAppointmentInfo> getAllAppointmentsForPatient(long patientID)
     {
-        if (!isPatient(patientID))
-            return null;
-
-        ArrayList<PatientAppointmentInfo> result = new ArrayList<PatientAppointmentInfo>();
-        String[] projection = { dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID,
-                                dbStrings.APPOINTMENT_TABLE_KEY_START_TIME,
-                                dbStrings.APPOINTMENT_TABLE_ATTR_END_TIME
-        };
-
-        String selection = dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID + " = ?";
-        String[] selectionArgs = { Long.toString(patientID) };
-        String orderBy = dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " ASC";
-
-        Cursor mCursor =
-                db.query(
-                        dbStrings.APPOINTMENT_TABLE_NAME,
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null,
-                        null,
-                        orderBy
-                );
-
-        if (mCursor != null && mCursor.moveToFirst()) {
-            long id = mCursor.getLong(0);
-            Date startDateTime = new Date(mCursor.getLong(1));
-            Date endDateTime = new Date(mCursor.getLong(2));
-
-            result.add(new PatientAppointmentInfo(id, startDateTime, endDateTime));
-
-            while (mCursor.moveToNext()) {
-                id = mCursor.getLong(0);
-                startDateTime = new Date(mCursor.getLong(1));
-                endDateTime = new Date(mCursor.getLong(2));
-                result.add(new PatientAppointmentInfo(id, startDateTime, endDateTime));
-            }
-        }
-        return result;
+        return getAppointmentsForPatient(patientID, false);
     }
 
     /*
-    Returns a sorted list of appointments (from earliest to latest) for a physician given his/her ID.
+    Returns a sorted list of UPCOMING appointments (from earliest to latest) for a patient given his/her ID.
+        Each appointment has:
+            - Physician ID
+            - Start date/time
+            - End date/time
+    Returns empty list if no appointments listed for a patient.
+    Returns null if ID did not belong to a patient.
+     */
+    public ArrayList<PatientAppointmentInfo> getUpcomingAppointmentsForPatient(long patientID)
+    {
+        return getAppointmentsForPatient(patientID, true);
+    }
+
+    /*
+    Returns true if a time slot is available for a patient.
+    The time slot is defined by a start date-time and an end date-time.
+     */
+    public boolean timeSlotAvailableForPatient(long patientID, Date startDateTime, Date endDateTime)
+    {
+        ArrayList<PatientAppointmentInfo> appointments = getUpcomingAppointmentsForPatient(patientID);
+        long startTime = startDateTime.getTime(),
+                endTime = endDateTime.getTime();
+
+        for (PatientAppointmentInfo appointment : appointments) {
+            long otherApptStart = appointment.startDateTime.getTime(),
+                    otherApptEnd = appointment.endDateTime.getTime();
+
+            if ( (startTime >= otherApptStart && startTime < otherApptEnd) ||
+                    (endTime > otherApptStart && endTime <= otherApptEnd) )
+                return false;
+        }
+        return true;
+    }
+
+    /*
+    Returns a sorted list of ALL appointments (from earliest to latest) for a physician given his/her ID.
+        Each appointment has:
+            - Patient ID
+            - Start date/time
+            - End date/time
     Returns empty list if no appointments listed for a physician.
     Returns null if ID did not belong to a physician.
      */
-    public ArrayList<PhysicianAppointmentInfo> getAppointmentsForPhysician(long physicianID)
+    public ArrayList<PhysicianAppointmentInfo> getAllAppointmentsForPhysician(long physicianID)
     {
-        if (!isPhysician(physicianID))
-            return null;
-
-        ArrayList<PhysicianAppointmentInfo> result = new ArrayList<PhysicianAppointmentInfo>();
-        String[] projection = { dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID,
-                dbStrings.APPOINTMENT_TABLE_KEY_START_TIME,
-                dbStrings.APPOINTMENT_TABLE_ATTR_END_TIME
-        };
-
-        String selection = dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + " = ?";
-        String[] selectionArgs = { Long.toString(physicianID) };
-        String orderBy = dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " ASC";
-
-        Cursor mCursor =
-                db.query(
-                        dbStrings.APPOINTMENT_TABLE_NAME,
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null,
-                        null,
-                        orderBy
-                );
-
-        if (mCursor != null && mCursor.moveToFirst()) {
-            long patientID = mCursor.getLong(0);
-            Date startDateTime = new Date(mCursor.getLong(1));
-            Date endDateTime = new Date(mCursor.getLong(2));
-
-            result.add(new PhysicianAppointmentInfo(patientID, startDateTime, endDateTime));
-
-            while (mCursor.moveToNext()) {
-                patientID = mCursor.getLong(0);
-                startDateTime = new Date(mCursor.getLong(1));
-                endDateTime = new Date(mCursor.getLong(2));
-                result.add(new PhysicianAppointmentInfo(patientID, startDateTime, endDateTime));
-            }
-        }
-        return result;
+        return getAppointmentsForPhysician(physicianID, false);
     }
 
+    /*
+    Returns a sorted list of ALL appointments (from earliest to latest) for a physician given his/her ID.
+        Each appointment has:
+            - Patient ID
+            - Start date/time
+            - End date/time
+    Returns empty list if no appointments listed for a physician.
+    Returns null if ID did not belong to a physician.
+     */
+    public ArrayList<PhysicianAppointmentInfo> getUpcomingAppointmentsForPhysician(long physicianID)
+    {
+        return getAppointmentsForPhysician(physicianID, true);
+    }
 
+    /*
+    Returns true if a time slot is available for a physician.
+    The time slot is defined by a start date-time and an end date-time.
+     */
+    public boolean timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime)
+    {
+        ArrayList<PhysicianAppointmentInfo> appointments = getUpcomingAppointmentsForPhysician(physicianID);
+        long startTime = startDateTime.getTime(),
+                endTime = endDateTime.getTime();
+
+        for (PhysicianAppointmentInfo appointment : appointments) {
+            long otherApptStart = appointment.startDateTime.getTime(),
+                    otherApptEnd = appointment.endDateTime.getTime();
+
+            if ( (startTime >= otherApptStart && startTime < otherApptEnd) ||
+                    (endTime > otherApptStart && endTime <= otherApptEnd) )
+                return false;
+        }
+        return true;
+    }
 
 
     /*---------- Class Helpers ----------*/
@@ -810,7 +833,9 @@ public class QADBHelper
     //---adds test users into the database (should only be used for testing)---
     private void addTestData()
     {
-        // Add the user Alice Wonderland, with Username "Alice123" and Password "Alice123"
+        /*
+        ADDING PATIENTS TO THE TABLE
+         */
         addPatient("Alice123",                              // Username
                 "Alice123",                                 // Password
                 "Alice Wonderland",                         // Name
@@ -829,7 +854,7 @@ public class QADBHelper
                 "Spongebob Squarepants",                    // Dentist Name
                 "Patrick Star"                              // Eye Doctor Name
         );
-        // Add the user Bob Builder, with Username "Bob456" and Password "Bob456"
+        // Add the patient Bob Builder, with Username "Bob456" and Password "Bob456"
         addPatient("Bob456",
                 "Bob456",
                 "Bob Builder",
@@ -849,15 +874,20 @@ public class QADBHelper
                 "Kagami Taiga"
         );
 
+
+        /*
+        ADDING PHYSICIANS TO THE TABLE
+         */
         // Add the physician Christian Morte into database
-        addPhysician("Christian123",
-                        "Christian123",
-                        "Christian Morte",
-                        "M",
-                        "4082345678",
-                        "morte@christian.com",
-                        "1234 One Road San Jose, CA 95131",
-                        new String[]{"Cardiologist", "Exercise Specialist"});
+        addPhysician("Christian123",                                                // Username
+                        "Christian123",                                             // Password
+                        "Christian Morte",                                          // Name
+                        "M",                                                        // Gender
+                        "4082345678",                                               // Phone
+                        "morte@christian.com",                                      // Email
+                        "1234 One Road San Jose, CA 95131",                         // Location
+                        new String[]{"Cardiologist", "Exercise Specialist"});       // Specializations
+
         // Add the physician Adam Lorta into database
         addPhysician("Adam123",
                     "Adam123",
@@ -876,6 +906,10 @@ public class QADBHelper
                 "86743 Thhree Street Santa Clara, CA 12345",
                 new String[]{"Cardiologist"});
 
+
+        /*
+        CREATING APPOINTMENTS FOR PATIENTS/PHYSICIANS, ADDING INTO TABLE
+         */
         addAppointment(1,               // Patient: Alice
                 3,                      // Physician: Christian
                 2016, 5, 4, 12, 30,      // Start Date Time: May 4, 2016 12:30 PM
@@ -884,86 +918,160 @@ public class QADBHelper
                 4,                      // Physician: Adam
                 2016, 5, 6, 15, 30,      // Start Date Time: May 6, 2016 3:30 PM
                 2016, 5, 6, 16, 30);     // End Date Time: May 6, 2016, 4:30 PM
+        addAppointment(2,               // Patient: Bob
+                4,                      // Physician: Adam
+                2016, 5, 6, 15, 30,      // Start Date Time: May 6, 2016 3:30 PM
+                2016, 5, 6, 16, 30);     // End Date Time: May 6, 2016, 4:30 PM
+        addAppointment(2,               // Patient: Bob
+                3,                      // Physician: Christian
+                2016, 11, 28, 20, 30,      // Start Date Time: May 6, 2016 8:30 PM
+                2016, 11, 28, 21, 40);     // End Date Time: May 6, 2016, 9:40 PM
 
-        /* THIS SHOULD NOT WORK */
+        /*
+        THIS SHOULD NOT WORK - User ID 3 belongs to a physician, and physicians should not be able to book
+                                appointments w/each other (unless registered as patients in a separate account).
+
+        This returns -1, which means the appointment was not able to be added.
+        */
         addAppointment(3,               // Patient: Christian (SHOULD NOT WORK)
                 4,                      // Physician: Adam
-                2016, 5, 4, 12, 30,      // Start Date Time: May 4, 2016 12:30 PM
+                2016, 5, 4, 12, 30,     // Start Date Time: May 4, 2016 12:30 PM
                 2016, 5, 4, 1, 30);     // End Date Time: May 4, 2016, 1:30 PM
+
+        addAppointment(0,
+                3,
+                2016, 11, 28, 22, 30,
+                2016, 11, 28, 24, 40);
     }
 
 
 
-
-
-
-    /* ---------- Christian: The next functions below don't matter for our application,
-                  but a good guidance for handling database code ---------- */
-
-    //---insert a title into the database---
-    public long insertTitle(String isbn, String title, String publisher)
+    /*---------- Appointment/Date Helpers ----------*/
+    /*
+    Returns a Date object given the integer parameters:
+        year, month, day, hour, and minute.
+     */
+    public Date getDate(int year, int month, int day, int hour, int minute)
     {
-        ContentValues initialValues = new ContentValues();
-        initialValues.put(KEY_ISBN, isbn);
-        initialValues.put(KEY_TITLE, title);
-        initialValues.put(KEY_PUBLISHER, publisher);
-        return db.insert(dbStrings.DATABASE_TABLE, null, initialValues);
+        String dateTime = year + "-" + month + "-" + day + " " + hour + ":" + minute + ":00";
+        return dateFormatter.parse(dateTime, new ParsePosition(0));
     }
 
-    //---deletes a particular title---
-    public boolean deleteTitle(long rowId)
+    /*
+    Returns a sorted list of ALL appointments (from earliest to latest) for a patient given his/her ID.
+    Returns empty list if no appointments listed for a patient.
+    Returns null if ID did not belong to a patient.
+     */
+    public ArrayList<PatientAppointmentInfo> getAppointmentsForPatient(long patientID, boolean onlyShowUpcoming)
     {
-        return db.delete(dbStrings.DATABASE_TABLE, KEY_ROWID +
-                "=" + rowId, null) > 0;
-    }
+        if (!isPatient(patientID))
+            return null;
 
-    //---retrieves all the titles---
-    public Cursor getAllTitles()
-    {
-        return db.query(dbStrings.DATABASE_TABLE, new String[] {
-                        KEY_ROWID,
-                        KEY_ISBN,
-                        KEY_TITLE,
-                        KEY_PUBLISHER},
-                null,
-                null,
-                null,
-                null,
-                null);
-    }
+        ArrayList<PatientAppointmentInfo> result = new ArrayList<PatientAppointmentInfo>();
+        String[] projection = { dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID,
+                dbStrings.APPOINTMENT_TABLE_KEY_START_TIME,
+                dbStrings.APPOINTMENT_TABLE_ATTR_END_TIME
+        };
 
-    //---retrieves a particular title---
-    public Cursor getTitle(long rowId) throws SQLException
-    {
-        Cursor mCursor =
-                db.query(true, dbStrings.DATABASE_TABLE, new String[] {
-                                KEY_ROWID,
-                                KEY_ISBN,
-                                KEY_TITLE,
-                                KEY_PUBLISHER
-                        },
-                        KEY_ROWID + "=" + rowId,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null);
-        if (mCursor != null) {
-            mCursor.moveToFirst();
+        String selection;
+        String[] selectionArgs;
+
+        if (onlyShowUpcoming) {
+            selection = dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID + " = ? AND " +
+                            dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " > ? ";
+            selectionArgs = new String[]{ Long.toString(patientID), Long.toString(new Date().getTime()) };
+        } else {
+            selection = dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID + " = ? ";
+            selectionArgs = new String[]{ Long.toString(patientID) };
         }
-        return mCursor;
+
+        String orderBy = dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " ASC";
+
+
+        Cursor mCursor =
+                db.query(
+                        dbStrings.APPOINTMENT_TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        orderBy
+                );
+
+        if (mCursor != null && mCursor.moveToFirst()) {
+            long id = mCursor.getLong(0);
+            Date startDateTime = new Date(mCursor.getLong(1));
+            Date endDateTime = new Date(mCursor.getLong(2));
+
+            result.add(new PatientAppointmentInfo(id, startDateTime, endDateTime));
+
+            while (mCursor.moveToNext()) {
+                id = mCursor.getLong(0);
+                startDateTime = new Date(mCursor.getLong(1));
+                endDateTime = new Date(mCursor.getLong(2));
+                result.add(new PatientAppointmentInfo(id, startDateTime, endDateTime));
+            }
+        }
+        return result;
     }
 
-    //---updates a title---
-    public boolean updateTitle(long rowId, String isbn,
-                               String title, String publisher)
+    /*
+    Returns a sorted list of appointments (from earliest to latest) for a physician given his/her ID.
+    Returns empty list if no appointments listed for a physician.
+    Returns null if ID did not belong to a physician.
+     */
+    public ArrayList<PhysicianAppointmentInfo> getAppointmentsForPhysician(long physicianID, boolean onlyShowUpcoming)
     {
-        ContentValues args = new ContentValues();
-        args.put(KEY_ISBN, isbn);
-        args.put(KEY_TITLE, title);
-        args.put(KEY_PUBLISHER, publisher);
-        return db.update(dbStrings.DATABASE_TABLE, args,
-                KEY_ROWID + "=" + rowId, null) > 0;
+        if (!isPhysician(physicianID))
+            return null;
+
+        ArrayList<PhysicianAppointmentInfo> result = new ArrayList<PhysicianAppointmentInfo>();
+        String[] projection = { dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID,
+                dbStrings.APPOINTMENT_TABLE_KEY_START_TIME,
+                dbStrings.APPOINTMENT_TABLE_ATTR_END_TIME
+        };
+
+        String selection;
+        String[] selectionArgs;
+
+        if (onlyShowUpcoming) {
+            selection = dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + " = ? AND " +
+                    dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " > ? ";
+            selectionArgs = new String[]{ Long.toString(physicianID), Long.toString(new Date().getTime()) };
+        } else {
+            selection = dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + " = ? ";
+            selectionArgs = new String[]{ Long.toString(physicianID) };
+        }
+
+        String orderBy = dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " ASC";
+
+        Cursor mCursor =
+                db.query(
+                        dbStrings.APPOINTMENT_TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        orderBy
+                );
+
+        if (mCursor != null && mCursor.moveToFirst()) {
+            long patientID = mCursor.getLong(0);
+            Date startDateTime = new Date(mCursor.getLong(1));
+            Date endDateTime = new Date(mCursor.getLong(2));
+
+            result.add(new PhysicianAppointmentInfo(patientID, startDateTime, endDateTime));
+
+            while (mCursor.moveToNext()) {
+                patientID = mCursor.getLong(0);
+                startDateTime = new Date(mCursor.getLong(1));
+                endDateTime = new Date(mCursor.getLong(2));
+                result.add(new PhysicianAppointmentInfo(patientID, startDateTime, endDateTime));
+            }
+        }
+        return result;
     }
 }
 

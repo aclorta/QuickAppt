@@ -14,14 +14,18 @@ Implemented
 - Created methods for adding, retrieving specializations for physician info
 - Retrieve from login, whether a user is a patient or physician
 
+(11/17)
+- Update add Dummy users to have more information in other tables
+    - Patients, physicians, appointments, specializations, etc.
+- Created methods for adding, retrieving appointments for patients and physicians
 
 To implement
 -------------
+- IMPORTANT: CHECK METHOD FOR APPOINTMENTS IF CERTAIN TIME INTERFERES WITH APPT FOR PHYSICIANS.
 - Add new DB hooks onto different activities into app
     - Select the nearest physicians based on ZIP-CODE and SYMPTOMS/SPECIALIZATIONS
         - Columns should be Zip code of physician, Distance from inputted zip code
         - Refer to picture taken from Crystal's lapotp
-    - Update add Dummy users to have more information in other tables
-        - Patients, physicians, appointments, specializations, etc.
+
     - On the home screen, display patient info (last name, first name, zip code), and the reminders for appts
         - Reminders should have datetime of appt, doctor associated with app, and location
