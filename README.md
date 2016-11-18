@@ -24,45 +24,61 @@ mDB.close();
 ```
 
 ## Login table Methods
-#### `public boolean userExists(String username)`
+```java
+public boolean userExists(String username)
+```
 ###### Return value
 &emsp;Returns <i>true</i> if a user exists on the database, <i>false</i> otherwise.<br>
 ###### Parameters
 - `String username` - username for a user
+
+###### Example usage
 ```java
 if ( mDB.userExists("enter username here") ) {
   // Do stuff here
 }
 ```
 
-#### `public boolean userExists(long id)`
+```java
+public boolean userExists(long id)
+```
 ###### Return value
 &emsp;Returns <i>true</i> if a user exists on the database, <i>false</i> otherwise.<br>
 ###### Parameters
 - `long id` - unique ID for a user
+
+###### Example usage
 ```java
 if ( mDB.userExists(1) ) {  // if user with ID=1 exists
   // Do stuff here
 }
 ```
 
-#### `public boolean loginValid(String username, String password)`
+```java
+public boolean loginValid(String username, String password)
+```
 ###### Return value
 &emsp;Returns <i>true</i> if a given username-password combination matches inside the user database, false otherwise.
 ###### Parameters
 - `String username` - username for a user
 - `String password` - password for a user
+
+###### Example usage
 ```java
 if ( mDB.loginValid("enter username here", "enter password here") ) {
   // Do stuff here
 }
 ```
 
-#### `public long getUserID(String username)`
+```java
+public long getUserID(String username)
+```
 ###### Return value
 &emsp;Returns the user ID for a specific user. If the user does not exist, then <b>0</b> is returned (which is a <i>null</i> user).
 ###### Parameters
 - `String username` - username for a user
+
+###### Example usage
 ```java
 String username = mDB.getUserID("enter username here");
 System.out.println("Username = " + username);
@@ -70,11 +86,15 @@ System.out.println("Username = " + username);
 
 ## Patient table Methods
 
-#### `public boolean isNullPatient(long patientID)`
+```java
+public boolean isNullPatient(long patientID)
+```
 ###### Return value
 &emsp;Returns true if a given patient ID is the null patient (has ID of 0).
 ###### Parameters
 - `long patientID` - unique ID for a patient user
+
+###### Example usage
 ```java
 mDB.isNullPatient(0);   // true
 mDB.isNullPatient(1);   // false
@@ -82,7 +102,15 @@ mDB.isNullPatient(23235235);   // false
 ```
 
 
-#### `public long addPatient(String username, String password, String name, String gender, Date birthDate, String maritalStatus, String phone, String email, String location, String occupation, String tobaccoSmoker, String regularExerciser, String allergies, String medications, String surgeries, String physicianName, String dentistName, String eyeDoctorName)`
+```java
+public long addPatient( String username, String password, 
+                        String name, String gender, 
+                        Date birthDate, String maritalStatus, 
+                        String phone, String email, String location, String occupation, 
+                        String tobaccoSmoker, String regularExerciser, 
+                        String allergies, String medications, String surgeries, 
+                        String physicianName, String dentistName, String eyeDoctorName)
+```
 ###### Description
 Adds a patient into the database with given parameters. There is also another `addPatient(...)` function that replaces the first two parameters of this function with the `patientID`, but this is <b>not</b> recommended, as the ID is automatically generated for user creation in this method call.
 ###### Return value
@@ -107,6 +135,8 @@ Adds a patient into the database with given parameters. There is also another `a
 - `String physicianName` - name of patient's primary physician
 - `String dentistName` - name of patient's primary dentist
 - `String eyeDoctorName` - name of patient's primary optometrist
+
+###### Example usage
 ```java
 mDB.addPatient( "Alice123",                                 // Username
                 "Alice123",                                 // Password
@@ -129,11 +159,15 @@ mDB.addPatient( "Alice123",                                 // Username
 );
 ```
 
-#### `public HashMap<String,String> getPatientInfo(long id)`
+```java
+public HashMap<String,String> getPatientInfo(long id)
+```
 ###### Return value
 &emsp;Returns `HashMap<String,String>` object of information for a patient. If an error occurred (eg. ID doesn't exist), returns `null`.
 ###### Parameters
 - `long id` - unique ID for a patient user
+
+###### Example usage
 ```java
 // Get patient ID
 long patientID = mDB.getUserID("enter username here");
@@ -162,19 +196,31 @@ System.out.println( " ID = " + patientInfo["ID"] +
 );
 ```
 
-#### `public boolean isPatient(long id)`
+```java
+public boolean isPatient(long id)
+```
 ###### Return value
 &emsp;Returns true if a patient exists on the database, false otherwise.
 ###### Parameters
 - `long id` - unique ID for a patient user
+
+###### Example usage
 ```java
-if (mDB.isPatient(1))
+long patientID = mDB.getUserID("enter patient username here");
+
+if (mDB.isPatient(patientID)) {
   // Do stuff here
+}
 ```
 
 ## Physician table Methods
 
-#### `public long addPhysician(String username, String password, String name, String gender, String phone, String email, String location, String[] specializations)`
+```java
+public long addPhysician( String username, String password, 
+                          String name, String gender, 
+                          String phone, String email, String location, 
+                          String[] specializations)
+```
 ###### Description
 Adds a physician into the database with given parameters. There is also another `addPhysician(...)` function that replaces the first two parameters of this function with the `physicianID`, but this is <b>not</b> recommended, as the ID is automatically generated for user creation in this method call.
 ###### Return value
@@ -188,6 +234,8 @@ Adds a physician into the database with given parameters. There is also another 
 - `String email` - email contact for physician
 - `String location` - location of primary hospital for physician
 - `String[] specializations` - specializations for the physician (eg. {"Cardiologist", "Exercise Specialist", ...})
+
+###### Example usage
 ```java
 mDB.addPhysician( "Christian123",                                             // Username
                   "Christian123",                                             // Password
@@ -199,11 +247,15 @@ mDB.addPhysician( "Christian123",                                             //
                   new String[]{"Cardiologist", "Exercise Specialist"});       // Specializations
 ```
 
-#### `public HashMap<String,String> getPhysicianInfo(long id)`
+```java
+public HashMap<String,String> getPhysicianInfo(long id)
+```
 ###### Return value
 &emsp;Returns `HashMap<String,String>` object of information for a physician. If an error occurred (eg. ID doesn't exist), returns `null`.
 ###### Parameters
 - `long id` - unique ID for a physician user
+
+###### Example usage
 ```java
 // Get physician ID
 long physicianID = mDB.getUserID("enter username here");
@@ -226,12 +278,61 @@ for (String specialization : physicianInfo["Specializations"]) {
   System.out.print( specialization + ", " );
 ```
 
-#### `public boolean isPhysician(long id)`
+```java
+public boolean isPhysician(long id)
+```
 ###### Return value
 &emsp;Returns true if a physician exists on the database, false otherwise.
 ###### Parameters
 - `long id` - unique ID for a physician user
+
+###### Example usage
 ```java
-if (mDB.isPhysician(1))
+long physicianId = mDB.getUserID("enter physician username here");
+if (mDB.isPhysician(physicianId)) {
   // Do stuff here
+}
+```
+
+## Specialization table Methods
+```java
+public long addPhysicianSpecialization(long id, String specialization)
+```
+###### Return value
+&emsp;Returns the row ID of the new specialization added in the table, -1 if an error occurred.
+###### Parameters
+- `long id` - unique ID for a physician user
+- `String specialization` - specialization to be added for physician
+
+###### Example usage
+```java
+long physicianId = mDB.getUserID("enter physician username here");
+
+long specializationRow = addPhysicianSpecialization(physicianID, "Cardiologist");
+if (specializationRow == -1) {
+  // specialization was not added, do something here
+} else {
+  // specialization added, do something here
+}
+```
+
+```java
+public long addPhysicianSpecialization(long id, String specialization)
+```
+###### Return value
+&emsp;Returns the row ID of the new specialization added in the table, -1 if an error occurred.
+###### Parameters
+- `long id` - unique ID for a physician user
+- `String specialization` - specialization to be added for physician
+
+###### Example usage
+```java
+long physicianId = mDB.getUserID("enter physician username here");
+
+long specializationRow = addPhysicianSpecialization(physicianID, "Cardiologist");
+if (specializationRow == -1) {
+  // specialization was not added, do something here
+} else {
+  // specialization added, do something here
+}
 ```
