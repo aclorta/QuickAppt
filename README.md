@@ -38,7 +38,7 @@ if ( mDB.userExists("enter username here") ) {
   // Do stuff here
 }
 ```
-
+======
 ```java
 public boolean userExists(long id)
 ```
@@ -53,6 +53,7 @@ if ( mDB.userExists(1) ) {  // if user with ID=1 exists
   // Do stuff here
 }
 ```
+======
 
 ```java
 public boolean loginValid(String username, String password)
@@ -69,7 +70,7 @@ if ( mDB.loginValid("enter username here", "enter password here") ) {
   // Do stuff here
 }
 ```
-
+======
 ```java
 public long getUserID(String username)
 ```
@@ -83,7 +84,7 @@ public long getUserID(String username)
 String username = mDB.getUserID("enter username here");
 System.out.println("Username = " + username);
 ```
-
+======
 ## Patient table Methods
 
 ```java
@@ -100,8 +101,7 @@ mDB.isNullPatient(0);   // true
 mDB.isNullPatient(1);   // false
 mDB.isNullPatient(23235235);   // false
 ```
-
-
+======
 ```java
 public long addPatient( String username, String password, 
                         String name, String gender, 
@@ -120,7 +120,7 @@ Adds a patient into the database with given parameters. There is also another `a
 - `String password` - password for patient user
 - `String name` - name of the patient
 - `String gender` - <b><u>single</u></b> character string for patient's gender (M/F)
-- `Date birthDate` - Date object for the birth date of patient
+- `Date birthDate` - Date object for the birth date of patient (refer to the `getDate(...)` method for creating dates)
 - `String maritalStatus` - marital status of patient (single, married, etc.)
 - `String phone` - phone number of patient (<b><u>must</u></b> be in format XXXYYYZZZZ)
 - `String email` - email contact for patient
@@ -158,7 +158,7 @@ mDB.addPatient( "Alice123",                                 // Username
                 "Patrick Star"                              // Eye Doctor Name
 );
 ```
-
+======
 ```java
 public HashMap<String,String> getPatientInfo(long id)
 ```
@@ -195,7 +195,7 @@ System.out.println( " ID = " + patientInfo["ID"] +
                     " Surgeries = " + patientInfo["Surgeries"] +
 );
 ```
-
+======
 ```java
 public boolean isPatient(long id)
 ```
@@ -212,7 +212,7 @@ if (mDB.isPatient(patientID)) {
   // Do stuff here
 }
 ```
-
+======
 ## Physician table Methods
 
 ```java
@@ -246,7 +246,7 @@ mDB.addPhysician( "Christian123",                                             //
                   "1234 One Road Irvine, CA 95131",                           // Location
                   new String[]{"Cardiologist", "Exercise Specialist"});       // Specializations
 ```
-
+======
 ```java
 public HashMap<String,String> getPhysicianInfo(long id)
 ```
@@ -277,7 +277,7 @@ System.out.println("Specializations = ");
 for (String specialization : physicianInfo["Specializations"]) {
   System.out.print( specialization + ", " );
 ```
-
+======
 ```java
 public boolean isPhysician(long id)
 ```
@@ -293,7 +293,7 @@ if (mDB.isPhysician(physicianId)) {
   // Do stuff here
 }
 ```
-
+======
 ## Specialization table Methods
 ```java
 public long addPhysicianSpecialization(long id, String specialization)
@@ -315,7 +315,7 @@ if (specializationRow == -1) {
   // specialization added, do something here
 }
 ```
-
+======
 ```java
 public long addPhysicianSpecialization(long id, String specialization)
 ```
@@ -336,3 +336,123 @@ if (specializationRow == -1) {
   // specialization added, do something here
 }
 ```
+======
+```java
+public ArrayList<String> getPhysicianSpecializations(long id)
+```
+###### Return value
+&emsp;Returns an `ArrayList<String>` of specializations for a specific physician, or `null` if an error occurred.
+###### Parameters
+- `long id` - unique ID for a physician user
+
+###### Example usage
+```java
+long physicianId = mDB.getUserID("enter physician username here");
+
+ArrayList<String> specializations = getPhysicianSpecializations(physicianId);
+for (String specialization : specializations) {
+  // Do stuff here
+}
+```
+======
+```java
+public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization)
+```
+###### Return value
+&emsp;Returns an `ArrayList<HashMap<String,String>>` of physicians given a specialization, or `null` if an error occurred. 
+###### Parameters
+- `String specialization` - specialization string for query
+
+###### Example usage
+```java
+String specialization = "Cardiologist";
+ArrayList<HashMap<String,String>> physiciansWithSpecialization = getPhysiciansWithSpecialization(specialization);
+
+for ( HashMap<String,String> physicianInfo : physiciansWithSpecialization ) {
+  System.out.println( " ID = " + physicianInfo["ID"] +
+                      " Name = " + physicianInfo["Name"] +
+                      " Gender = " + physicianInfo["Gender"] +
+                      " Phone = " + physicianInfo["Phone"] +
+                      " Email = " + physicianInfo["Email"] +
+                      " Location = " + physicianInfo["Location"]
+  );
+}
+```
+======
+```java
+public long addAppointment(long patientID, long physicianID, Date startDate, Date endDate)
+public long addAppointment(   long patientID, long physicianID,
+                              int startYear, int startMonth, int startDay, int startHour, int startMinute,
+                              int endYear, int endMonth, int endDay, int endHour, int endMinute)
+```
+###### Description
+Adds an appointment for a given patient and physician spanning from the start date-time and end date-time. If a patient and/or physician is unavailable for the time slot specified, the appointment is not added to the table. If there is an error concerning the patient ID, physician ID, or the time slot specified, the appointment is not added to the table.
+###### Return value
+&emsp;Returns the row ID of new appointment in the table. Otherwise, returns -1 if an error occurred (eg. ID doesn't exist).
+###### Parameters
+- `long patientID` - unique ID for a patient user
+- `long physicianID` - unique ID for a physician user
+- `Date startDate` - start date-time of appointment (refer to the `getDate(...)` method for creating dates)
+- `Date endDate` - end date-time of appointment (refer to the `getDate(...)` method for creating dates)
+- `int startYear, int startMonth, int startDay, int startHour, int startMinute` - <i>(for second method)</i> parameters for start date
+- `int endYear, int endMonth, int endDay, int endHour, int endMinute` - <i>(for second method)</i> parameters for end date
+
+###### Example usage
+```java
+// Get patient, physician IDs 
+long patientId = mDB.getUserID("enter patient username here");
+long physicianId = mDB.getUserID("enter physician username here");
+
+// Appointment time slot:
+//  Start = January 1, 2016 12:00 PM
+//  End = January 1, 2016 12:30 PM
+Date start = mDB.getDate(2016, 1, 1, 12, 0),
+     end = mDB.getDate(2016, 1, 1, 12, 30);
+     
+if ( mDB.addAppointment(patientId, physicianId, start, end) > -1 ) {
+  // appointment added, do something here
+} else {
+  // appointment not added, do something here
+}
+
+// Appointment time slot:
+//  Start = February 1, 2016 6:15 PM
+//  End = February 1, 2016 7:30 PM
+if ( mDB.addAppointment(patientId, physicianId, 
+                        2016, 2, 1, 18, 15, 
+                        2016, 2, 1, 19, 30) > -1 ) {
+  // appointment added, do something here
+} else {
+  // appointment not added, do something here
+}
+```
+======
+```java
+public long addTimeBlockForPhysician(long physicianID, Date startDateTime, Date endDateTime)
+```
+###### Description
+Adds a time slot block for a physician. This means that the specified time slot is not available for patients to choose from the physician's schedule. Internally, this function masks the time slot block by booking an appointment with the <i>null user</i> (patient ID = 0). If you want to find out if a time slot is blocked, check if an appointment is associated with patient ID = 0. (Refer to `getAllAppointmentsForPhysician(...) ` or `getUpcomingAppointmentsForPhysician(...)` for more info) If the time slots specified or the physician does not exist on the database, the time block is not added into the database.
+###### Return value
+&emsp;Returns the row ID of the new appointment (time block) added in the table, -1 if an error occurred.
+###### Parameters
+- `long physicianID` - unique ID for a physician user
+- `Date startDateTime` - start date-time of time block (refer to the `getDate(...)` method for creating dates)
+- `Date endDateTime` - end date-time of time block (refer to the `getDate(...)` method for creating dates)
+
+###### Example usage
+```java
+long physicianId = mDB.getUserID("enter physician username here");
+
+// Physician unavailable from:
+//  Start = January 1, 2016 12:00 PM
+//  End = January 1, 2016 12:30 PM
+Date start = mDB.getDate(2016, 1, 1, 12, 0),
+     end = mDB.getDate(2016, 1, 1, 12, 30);
+
+if ( mDB.addTimeBlockForPhysician(long physicianID, Date startDateTime, Date endDateTime) == -1) {
+  // time block not added, do something here
+} else {
+  // time block added, do something here
+}
+```
+======
