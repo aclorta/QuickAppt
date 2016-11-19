@@ -5,6 +5,8 @@ Android App which connects users to local physicians.
 # API Reference
 All of the methods shown below are located in the <a href="https://github.com/aclorta/QuickAppt/blob/Database/app/src/main/java/com/example/team6/quickappt/QADBHelper.java"><i>QADBHelper.java</i></a> file inside the <i>src</i> directory. For more information on how these were implemented, please see the code for further reference. There are various comments throughout each definition as well as some documentation above each defined method.
 
+[Login table Methods](#Login table Methods)  
+
 ## QADB Helper
 In order to use the API methods, you must create an instance of the QADBHelper class inside a context. After initialization, calling the `open()` method creates the database and allows for proper use of the API. Once finished using the class inside the application, it is good practice to call the `close()` method to shut down the database helper.
 
@@ -23,6 +25,7 @@ Insert specific activity code here
 mDB.close();
 ```
 
+<a name="Login table Methods"/>
 ## Login table Methods
 ```java
 public boolean userExists(String username)
@@ -113,6 +116,8 @@ public long addPatient( String username, String password,
 ```
 ###### Description
 Adds a patient into the database with given parameters. There is also another `addPatient(...)` function that replaces the first two parameters of this function with the `patientID`, but this is <b>not</b> recommended, as the ID is automatically generated for user creation in this method call.
+
+**IMPORTANT**: You should store the return value of this function throughout the program because it returns the ID of the patient user.
 ###### Return value
 &emsp;Returns the row ID of the newly inserted row in the patient table, or -1 if an error occurred.
 ###### Parameters
@@ -138,25 +143,27 @@ Adds a patient into the database with given parameters. There is also another `a
 
 ###### Example usage
 ```java
-mDB.addPatient( "Alice123",                                 // Username
-                "Alice123",                                 // Password
-                "Alice Wonderland",                         // Name
-                "F",                                        // Gender (Female)
-                mDB.getDate(1990, 1, 2),                    // Birth Date: January 2, 1990
-                "Married",                                  // Marital status
-                "1234567890",                               // Phone-number: (123) 456-7890
-                "alice@wonderland.com",                     // Email
-                "1234 Example Street Irvine, CA 92617",     // Location
-                "Software Engineer",                        // Occupation
-                "Y",                                        // Tobacco Smoker?
-                "N",                                        // Regular Exerciser?
-                "Ibuprofen, dust",                          // Allergies
-                "N/A",                                      // Medications
-                "Right ankle surgery",                      // Surgeries
-                "Winnie Pooh",                              // Physician Name
-                "Spongebob Squarepants",                    // Dentist Name
-                "Patrick Star"                              // Eye Doctor Name
+long patientID = mDB.addPatient(  "Alice123",                                 // Username
+                                  "Alice123",                                 // Password
+                                  "Alice Wonderland",                         // Name
+                                  "F",                                        // Gender (Female)
+                                  mDB.getDate(1990, 1, 2),                    // Birth Date: January 2, 1990
+                                  "Married",                                  // Marital status
+                                  "1234567890",                               // Phone-number: (123) 456-7890
+                                  "alice@wonderland.com",                     // Email
+                                  "1234 Example Street Irvine, CA 92617",     // Location
+                                  "Software Engineer",                        // Occupation
+                                  "Y",                                        // Tobacco Smoker?
+                                  "N",                                        // Regular Exerciser?
+                                  "Ibuprofen, dust",                          // Allergies
+                                  "N/A",                                      // Medications
+                                  "Right ankle surgery",                      // Surgeries
+                                  "Winnie Pooh",                              // Physician Name
+                                  "Spongebob Squarepants",                    // Dentist Name
+                                  "Patrick Star"                              // Eye Doctor Name
 );
+
+System.out.println("The patient ID for the new patient user = " + patientID);
 ```
 ======
 ```java
@@ -223,6 +230,8 @@ public long addPhysician( String username, String password,
 ```
 ###### Description
 Adds a physician into the database with given parameters. There is also another `addPhysician(...)` function that replaces the first two parameters of this function with the `physicianID`, but this is <b>not</b> recommended, as the ID is automatically generated for user creation in this method call.
+
+**IMPORTANT**: You should store the return value of this function throughout the program because it returns the ID of the physician user.
 ###### Return value
 &emsp;Returns the row ID of the newly inserted row in the physician table, or -1 if an error occurred.
 ###### Parameters
@@ -237,14 +246,17 @@ Adds a physician into the database with given parameters. There is also another 
 
 ###### Example usage
 ```java
-mDB.addPhysician( "Christian123",                                             // Username
-                  "Christian123",                                             // Password
-                  "Christian Morte",                                          // Name
-                  "M",                                                        // Gender
-                  "4082345678",                                               // Phone
-                  "morte@christian.com",                                      // Email
-                  "1234 One Road Irvine, CA 95131",                           // Location
-                  new String[]{"Cardiologist", "Exercise Specialist"});       // Specializations
+long physicianID = mDB.addPhysician(  "Christian123",                                             // Username
+                                      "Christian123",                                             // Password
+                                      "Christian Morte",                                          // Name
+                                      "M",                                                        // Gender
+                                      "4082345678",                                               // Phone
+                                      "morte@christian.com",                                      // Email
+                                      "1234 One Road Irvine, CA 95131",                           // Location
+                                      new String[]{"Cardiologist", "Exercise Specialist"});       // Specializations
+);
+
+System.out.println("The ID for the new physician user = " + physicianID);
 ```
 ======
 ```java
@@ -379,6 +391,7 @@ for ( HashMap<String,String> physicianInfo : physiciansWithSpecialization ) {
 }
 ```
 ======
+## Appointment table Methods
 ```java
 public long addAppointment(long patientID, long physicianID, Date startDate, Date endDate)
 public long addAppointment(   long patientID, long physicianID,
@@ -388,7 +401,7 @@ public long addAppointment(   long patientID, long physicianID,
 ###### Description
 Adds an appointment for a given patient and physician spanning from the start date-time and end date-time. If a patient and/or physician is unavailable for the time slot specified, the appointment is not added to the table. If there is an error concerning the patient ID, physician ID, or the time slot specified, the appointment is not added to the table.
 ###### Return value
-&emsp;Returns the row ID of new appointment in the table. Otherwise, returns -1 if an error occurred (eg. ID doesn't exist).
+&emsp;Returns the row ID of new appointment in the table. Otherwise, returns -1 if an error occurred (eg. ID doesn't exist, time slot booked for patient or physician).
 ###### Parameters
 - `long patientID` - unique ID for a patient user
 - `long physicianID` - unique ID for a physician user
@@ -433,7 +446,7 @@ public long addTimeBlockForPhysician(long physicianID, Date startDateTime, Date 
 ###### Description
 Adds a time slot block for a physician. This means that the specified time slot is not available for patients to choose from the physician's schedule. Internally, this function masks the time slot block by booking an appointment with the <i>null user</i> (patient ID = 0). If you want to find out if a time slot is blocked, check if an appointment is associated with patient ID = 0. (Refer to `getAllAppointmentsForPhysician(...) ` or `getUpcomingAppointmentsForPhysician(...)` for more info) If the time slots specified or the physician does not exist on the database, the time block is not added into the database.
 ###### Return value
-&emsp;Returns the row ID of the new appointment (time block) added in the table, -1 if an error occurred.
+&emsp;Returns the row ID of the new appointment (time block) added in the table, -1 if an error occurred (eg. time slot booked, ID does not exist).
 ###### Parameters
 - `long physicianID` - unique ID for a physician user
 - `Date startDateTime` - start date-time of time block (refer to the `getDate(...)` method for creating dates)
@@ -456,3 +469,194 @@ if ( mDB.addTimeBlockForPhysician(long physicianID, Date startDateTime, Date end
 }
 ```
 ======
+```java
+public ArrayList<PatientAppointmentInfo> getAllAppointmentsForPatient(long patientID)
+```
+###### Description
+Returns a list of <b>all</b> appointments for a patient. A `PatientAppointmentInfo` object has three getter methods for information for the appointment:
+  - `physicianID()` - returns a `long` ID for associated physician in appointment
+  - `startDateTime()` - returns a `Date` object for the start date-time of appointment
+  - `endDateTime()` - returns a `Date` object for the end date-time of appointment
+  
+###### Return value
+&emsp;Returns an `ArrayList<PatientAppointmentInfo>` of <b>all</b> the appointments the patient has/had. Returns an <b>empty</b> list if a patient has no appointments associated with him/her. Returns `null` if an error occurred (eg. patientID does not exist in database).
+
+###### Parameters
+- `long patientID` - unique ID for a patient user
+
+###### Example usage
+```java
+long patientID = mDB.getUserID("enter patient username here");
+ArrayList<PatientAppointmentInfo> appointments = mDB.getAllAppointmentsForPatient(patientID);
+
+for (PatientAppointmentInfo appointment : appointments) {
+  long physicianID = appointment.physicianID();
+  Date startOfAppointment = appointment.startDateTime(),
+       endOfAppointment = appointment.endDateTime();
+  
+  // Initialize a date formatter object
+  android.text.format.DateFormat df = new android.text.format.DateFormat();
+  
+  // Format date (in this case, it will be like "2016-1-23 12:30:00" for the date January 23, 2016 12:30:00 PM) 
+  String start = df.format("yyyy-MM-dd hh:mm:ss", startOfAppointment),
+         end = df.format("yyyy-MM-dd hh:mm:ss", endOfAppointment);
+
+  System.out.println( " Physician (ID) for appointment = " + physicianID +
+                      " Start of Appointment = " + start +
+                      " End of Appointment = " + end
+  );
+}
+```
+======
+```java
+public ArrayList<PatientAppointmentInfo> getUpcomingAppointmentsForPatient(long patientID)
+```
+###### Description
+Returns a list of <b>upcoming</b> appointments for a patient. A `PatientAppointmentInfo` object has three getter methods for information for the appointment:
+  - `physicianID()` - returns a `long` ID for associated physician in appointment
+  - `startDateTime()` - returns a `Date` object for the start date-time of appointment
+  - `endDateTime()` - returns a `Date` object for the end date-time of appointment
+  
+###### Return value
+&emsp;Returns an `ArrayList<PatientAppointmentInfo>` of <b>upcoming</b> appointments for a patient. Returns an <b>empty</b> list if a patient has no upcoming appointments. Returns `null` if an error occurred (eg. patientID does not exist in database).
+
+###### Parameters
+- `long patientID` - unique ID for a patient user
+
+###### Example usage
+&emsp;Please see the `getAllAppointmentsForPatient(long patientID)` method for example usage.
+
+======
+```java
+public boolean timeSlotAvailableForPatient(long patientID, Date startDateTime, Date endDateTime)
+```
+###### Return value
+&emsp;Returns <i>true</i> if a given time slot is available for a patient, <i>false</i> otherwise.
+###### Parameters
+- `long patientID` - unique ID for a patient user
+- `Date startDateTime` - Date object for start of time slot (refer to the `getDate(...)` method for creating dates)
+- `Date endDateTime` - Date object for end of time slot (refer to the `getDate(...)` method for creating dates)
+
+###### Example usage
+```java
+// Patient ID
+long patientID = 1;
+
+// Start = March 5, 2016 8:00 AM
+// End = March 5, 2016 8:30 AM
+Date start = mDB.getDate(2016, 3, 5, 8, 0),
+     end = mDB.getDate(2016, 3, 5, 8, 30);
+
+if ( mDB.timeSlotAvailableForPatient(patientID, start, end) ) {
+  // Time slot available for patient, do something here
+} else {
+  // Time slot not available for patient, do something here
+}
+```
+======
+```java
+public ArrayList<PhysicianAppointmentInfo> getAllAppointmentsForPhysician(long physicianID)
+```
+###### Description
+Returns a list of <b>all</b> appointments for a physician. A `PhysicianAppointmentInfo` object has three getter methods for information for the appointment:
+  - `patientID()` - returns a `long` ID for associated patient in appointment
+  - `startDateTime()` - returns a `Date` object for the start date-time of appointment
+  - `endDateTime()` - returns a `Date` object for the end date-time of appointment
+  
+###### Return value
+&emsp;Returns an `ArrayList<PhysicianAppointmentInfo>` of <b>all</b> the appointments the physician has/had/will have. Returns an <b>empty</b> list if a physician has no appointments associated with him/her. Returns `null` if an error occurred (eg. physicianID does not exist in database).
+
+###### Parameters
+- `long physicianID` - unique ID for a physician user
+
+###### Example usage
+```java
+long physicianID = mDB.getUserID("enter physician username here");
+ArrayList<PhysicianAppointmentInfo> appointments = mDB.getAllAppointmentsForPhysician(physicianID);
+
+for (PhysicianAppointmentInfo appointment : appointments) {
+  long patientID = appointment.patientID();
+  Date startOfAppointment = appointment.startDateTime(),
+       endOfAppointment = appointment.endDateTime();
+  
+  // Initialize a date formatter object
+  android.text.format.DateFormat df = new android.text.format.DateFormat();
+  
+  // Format date (in this case, it will be like "2016-1-23 12:30:00" for the date January 23, 2016 12:30:00 PM) 
+  String start = df.format("yyyy-MM-dd hh:mm:ss", startOfAppointment),
+         end = df.format("yyyy-MM-dd hh:mm:ss", endOfAppointment);
+
+  System.out.println( " Patient (ID) for appointment = " + patientID +
+                      " Start of Appointment = " + start +
+                      " End of Appointment = " + end
+  );
+}
+```
+======
+```java
+public ArrayList<PhysicianAppointmentInfo> getUpcomingAppointmentsForPhysician(long physicianID)
+```
+###### Description
+Returns a list of <b>upcoming</b> appointments for a physician. A `PhysicianAppointmentInfo` object has three getter methods for information for the appointment:
+  - `patientID()` - returns a `long` ID for associated patient in appointment
+  - `startDateTime()` - returns a `Date` object for the start date-time of appointment
+  - `endDateTime()` - returns a `Date` object for the end date-time of appointment
+  
+###### Return value
+&emsp;Returns an `ArrayList<PhysicianAppointmentInfo>` of <b>upcoming</b> appointments for a physician. Returns an <b>empty</b> list if a patient has no upcoming appointments. Returns `null` if an error occurred (eg. physicianID does not exist in database).
+
+###### Parameters
+- `long physicianID` - unique ID for a physician user
+
+###### Example usage
+&emsp;Please see the `getAllAppointmentsForPhysician(long physicianID)` method for example usage.
+
+======
+```java
+public boolean timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime)
+```
+###### Return value
+&emsp;Returns <i>true</i> if a given time slot is available for a physician, <i>false</i> otherwise.
+###### Parameters
+- `long physicianID` - unique ID for a physician user
+- `Date startDateTime` - Date object for start of time slot (refer to the `getDate(...)` method for creating dates)
+- `Date endDateTime` - Date object for end of time slot (refer to the `getDate(...)` method for creating dates)
+
+###### Example usage
+```java
+// Physician ID
+long physicianID = 1;
+
+// Start = March 5, 2016 8:00 AM
+// End = March 5, 2016 8:30 AM
+Date start = mDB.getDate(2016, 3, 5, 8, 0),
+     end = mDB.getDate(2016, 3, 5, 8, 30);
+
+if ( mDB.timeSlotAvailableForPhysician(physicianID, start, end) ) {
+  // Time slot available for physician, do something here
+} else {
+  // Time slot not available for physician, do something here
+}
+```
+
+## General helper methods
+```java
+public Date getDate(int year, int month, int day, int hour, int minute)   // for specific date-times
+public Date getDate(int year, int month, int day)                         // for general dates (such as birth dates)
+```
+###### Return value
+&emsp;Returns a `Date` object based on the given parameters of the function. Returns `null` if an error occurred.
+###### Parameters
+- `int year` - year for date
+- `int month` - month for date
+- `int hour` - hour for date 
+- `int minute` - minute for date
+
+###### Example usage
+```java
+// d1 = November 28, 2016 1:00 AM
+Date d1 = mDB.getDate(2016, 11, 28, 1, 0);
+
+// d2 = November 28, 2016 (technically, on 12:00 AM)
+Date d2 = mDB.getDate(2016, 11, 28);
+```
