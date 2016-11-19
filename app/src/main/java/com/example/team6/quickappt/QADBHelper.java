@@ -112,14 +112,25 @@ public class QADBHelper
 
     public class PatientAppointmentInfo
     {
-        public long physicianID;
-        public Date startDateTime;
-        public Date endDateTime;
+        private long physicianID;
+        private Date startDateTime;
+        private Date endDateTime;
 
         public PatientAppointmentInfo(long id, Date start, Date end) {
             physicianID = id;
             startDateTime = start;
             endDateTime = end;
+        }
+
+        // Getter methods
+        public long physicianID() {
+            return physicianID;
+        }
+        public Date startDateTime() {
+            return startDateTime;
+        }
+        public Date endDateTime() {
+            return endDateTime;
         }
 
         @Override
@@ -131,14 +142,25 @@ public class QADBHelper
     }
     public class PhysicianAppointmentInfo
     {
-        public long patientID;
-        public Date startDateTime;
-        public Date endDateTime;
+        private long patientID;
+        private Date startDateTime;
+        private Date endDateTime;
 
         public PhysicianAppointmentInfo(long id, Date start, Date end) {
             patientID = id;
             startDateTime = start;
             endDateTime = end;
+        }
+
+        // Getter methods
+        public long patientID() {
+            return patientID;
+        }
+        public Date startDateTime() {
+            return startDateTime;
+        }
+        public Date endDateTime() {
+            return endDateTime;
         }
 
         @Override
@@ -975,7 +997,7 @@ public class QADBHelper
     Returns empty list if no appointments listed for a patient.
     Returns null if ID did not belong to a patient.
      */
-    public ArrayList<PatientAppointmentInfo> getAppointmentsForPatient(long patientID, boolean onlyShowUpcoming)
+    private ArrayList<PatientAppointmentInfo> getAppointmentsForPatient(long patientID, boolean onlyShowUpcoming)
     {
         if (!isPatient(patientID))
             return null;
@@ -1034,7 +1056,7 @@ public class QADBHelper
     Returns empty list if no appointments listed for a physician.
     Returns null if ID did not belong to a physician.
      */
-    public ArrayList<PhysicianAppointmentInfo> getAppointmentsForPhysician(long physicianID, boolean onlyShowUpcoming)
+    private ArrayList<PhysicianAppointmentInfo> getAppointmentsForPhysician(long physicianID, boolean onlyShowUpcoming)
     {
         if (!isPhysician(physicianID))
             return null;
