@@ -5,7 +5,18 @@ Android App which connects users to local physicians.
 # API Reference
 All of the methods shown below are located in the <a href="https://github.com/aclorta/QuickAppt/blob/Database/app/src/main/java/com/example/team6/quickappt/QADBHelper.java"><i>QADBHelper.java</i></a> file inside the <i>src</i> directory. For more information on how these were implemented, please see the code for further reference. There are various comments throughout each definition as well as some documentation above each defined method.
 
-[Login table Methods](#Login table Methods)  
+## Table of Contents
+1. [Login Methods](#Login table Methods)
+  - [userExists(long id)](#userExists(long id))
+  - [loginValid(String username, String password)](#loginValid(String username, String password))
+  - [getUserID(String username)](#getUserID(String username))
+2. [Patient Methods](#Patient Methods)
+  - [isNullPatient(long patientID)](#isNullPatient(long patientID))
+  - [addPatient( String username, String password, ... )](#addPatient( String username, String password, ... ))
+  - [getPatientInfo(long id)](#getPatientInfo(long id))
+3. [Physician Methods](#Physician Methods)
+4. [Specialization Methods](#Specialization Methods)
+5. [Appointment Methods](#Appointment Methods)
 
 ## QADB Helper
 In order to use the API methods, you must create an instance of the QADBHelper class inside a context. After initialization, calling the `open()` method creates the database and allows for proper use of the API. Once finished using the class inside the application, it is good practice to call the `close()` method to shut down the database helper.
@@ -42,6 +53,7 @@ if ( mDB.userExists("enter username here") ) {
 }
 ```
 ======
+<a name="userExists(long id)"/>
 ```java
 public boolean userExists(long id)
 ```
@@ -57,7 +69,7 @@ if ( mDB.userExists(1) ) {  // if user with ID=1 exists
 }
 ```
 ======
-
+<a name="loginValid(String username, String password)"/>
 ```java
 public boolean loginValid(String username, String password)
 ```
@@ -74,6 +86,7 @@ if ( mDB.loginValid("enter username here", "enter password here") ) {
 }
 ```
 ======
+<a name="getUserID(String username)"/>
 ```java
 public long getUserID(String username)
 ```
@@ -88,8 +101,10 @@ String username = mDB.getUserID("enter username here");
 System.out.println("Username = " + username);
 ```
 ======
+<a name="Patient Methods"/>
 ## Patient table Methods
 
+<a name="isNullPatient(long patientID)"/>
 ```java
 public boolean isNullPatient(long patientID)
 ```
@@ -105,6 +120,7 @@ mDB.isNullPatient(1);   // false
 mDB.isNullPatient(23235235);   // false
 ```
 ======
+<a name="addPatient( String username, String password, ... )"/>
 ```java
 public long addPatient( String username, String password, 
                         String name, String gender, 
@@ -166,6 +182,7 @@ long patientID = mDB.addPatient(  "Alice123",                                 //
 System.out.println("The patient ID for the new patient user = " + patientID);
 ```
 ======
+<a name="getPatientInfo(long id)"/>
 ```java
 public HashMap<String,String> getPatientInfo(long id)
 ```
@@ -220,6 +237,7 @@ if (mDB.isPatient(patientID)) {
 }
 ```
 ======
+<a name="Physician Methods"/>
 ## Physician table Methods
 
 ```java
@@ -306,6 +324,7 @@ if (mDB.isPhysician(physicianId)) {
 }
 ```
 ======
+<a name="Specialization Methods"/>
 ## Specialization table Methods
 ```java
 public long addPhysicianSpecialization(long id, String specialization)
@@ -391,6 +410,7 @@ for ( HashMap<String,String> physicianInfo : physiciansWithSpecialization ) {
 }
 ```
 ======
+<a name="Appointment Methods"/>
 ## Appointment table Methods
 ```java
 public long addAppointment(long patientID, long physicianID, Date startDate, Date endDate)
@@ -639,6 +659,7 @@ if ( mDB.timeSlotAvailableForPhysician(physicianID, start, end) ) {
 }
 ```
 
+<a name="General Helper Methods"/>
 ## General helper methods
 ```java
 public Date getDate(int year, int month, int day, int hour, int minute)   // for specific date-times
