@@ -25,6 +25,15 @@
         android:layout_alignParentStart="true"
         android:id="@+id/editText"
         android:hint="First Name" />
+    <TextView
+        android:text="TextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/lastname"
+        android:layout_alignParentStart="true"
+        tools:text="Last Name:"
+        android:textAppearance="@style/TextAppearance.AppCompat"
+        android:layout_below="@+id/editText" />
 
     <EditText
         android:layout_width="wrap_content"
@@ -36,27 +45,27 @@
         android:layout_alignParentStart="true"
         android:id="@+id/editText2"
         android:hint="Last Name" />
-
-    <Spinner
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/editText2"
-        android:id="@+id/Months"
-        android:entries="@android:drawable/bottom_bar"
-        android:spinnerMode="dropdown"
-        android:layout_alignParentStart="true">
-
-    </Spinner>
-
     <TextView
         android:text="TextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/textView2"
-        android:layout_alignParentStart="true"
         tools:text="Birth Date:"
         android:textAppearance="@style/TextAppearance.AppCompat"
-        android:layout_above="@+id/editText3" />
+        android:layout_below="@+id/editText2"
+        android:layout_alignParentStart="true" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/editText2"
+        android:id="@+id/Months"
+        android:entries="@android:drawable/bottom_bar"
+        tools:text="Enter your Birth Date here"
+        android:layout_alignParentStart="true">
+
+    </EditText>
+
     <TextView
         android:text="TextView"
         android:layout_width="wrap_content"
@@ -110,7 +119,7 @@
         android:layout_below="@+id/textView4"
         android:layout_alignParentStart="true" />
     <TextView
-        android:text="TextView"
+        android:text="@string/textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/textView5"
@@ -123,11 +132,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:inputType="textPersonName"
-        android:text="List Medications here:"
+        android:text="@string/list_medications_here"
         android:ems="10"
         android:id="@+id/editText6"
         android:hint=""
         android:layout_below="@+id/textView5"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:text="TextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/firstname"
+        tools:text="First Name:"
+        android:textAppearance="@style/TextAppearance.AppCompat"
+        android:layout_alignParentTop="true"
         android:layout_alignParentStart="true" />
 
 

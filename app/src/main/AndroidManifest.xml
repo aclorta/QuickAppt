@@ -26,8 +26,9 @@
         </activity>
 
         <!-- Home screen activity -->
-        <activity android:name=".HomeScreen"></activity>
-        <activity android:name=".Patient_Profile"></activity>
+        <activity android:name=".HomeScreen" />
+        <activity android:name=".Patient_Profile" />
+        <activity android:name=".Physician_activity"></activity>
     </application>
 
 </manifest>
