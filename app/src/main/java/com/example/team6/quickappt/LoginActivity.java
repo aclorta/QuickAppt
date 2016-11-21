@@ -210,12 +210,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 System.out.println("Info for patient = " + mDB.getPatientInfo(userID));
                 System.out.println("All appointments for patient = " + mDB.getAllAppointmentsForPatient(userID));
                 System.out.println("Upcoming appointments for patient = " + mDB.getUpcomingAppointmentsForPatient(userID));
+                System.out.println("Physicians w/specialization 'Cardiologist' = " + mDB.getPhysiciansWithSpecialization("Cardiologist",
+                                                                                                                        "92617"
+                ));
+
             }
             else if (mDB.isPhysician(userID)) {
                 System.out.println("Info for physician = " + mDB.getPhysicianInfo(userID));
                 System.out.println("Physicians with specialization 'Cardiologist' = " + mDB.getPhysiciansWithSpecialization("Cardiologist"));
                 System.out.println("All appointments for physician = " + mDB.getAllAppointmentsForPhysician(userID));
                 System.out.println("Upcoming appointments for physician = " + mDB.getUpcomingAppointmentsForPhysician(userID));
+                System.out.println("Available time slots (11/28) = " + mDB.getTimeSlotsAvailableForPhysician(userID,
+                                                    mDB.getDate(2016, 11, 28, 7, 15),
+                                                    mDB.getDate(2016, 11, 28, 21, 0)));
 
             }
             else {
