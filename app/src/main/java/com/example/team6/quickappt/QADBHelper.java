@@ -634,6 +634,108 @@ public class QADBHelper
     */
     public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization,
                                                                              String location,
+                                                                             float range,
+                                                                             Date startDateRange,
+                                                                             Date endDateRange)
+    {
+        String[] projection = {
+                dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID
+        };
+
+        String selection = dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION + " = ?";
+        String[] selectionArgs = { specialization };
+        ArrayList<HashMap<String,String>> result;
+
+        if (specialization.equalsIgnoreCase("any")) {
+            selection = null;
+            selectionArgs = null;
+        }
+
+        Cursor mCursor =
+                db.query(
+                        dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        null
+                );
+        if (mCursor != null && mCursor.moveToFirst()) {
+            result = new ArrayList<HashMap<String,String>>();
+
+            HashMap<String,String> physicianInfo = getPhysicianInfo(mCursor.getLong(0));
+            float distanceToPhysician = getDistance(location, physicianInfo.get("Location"));
+
+            if (distanceToPhysician <= range && getTimeSlotsAvailableForPhysician( Long.parseLong(physicianInfo.get("ID")),
+                                                                                    startDateRange, endDateRange).size() > 0) {
+                result.add(physicianInfo);
+            }
+
+            while (mCursor.moveToNext()) {
+                physicianInfo = getPhysicianInfo(mCursor.getLong(0));
+                distanceToPhysician = getDistance(location, physicianInfo.get("Location"));
+
+                if (distanceToPhysician <= range && getTimeSlotsAvailableForPhysician( Long.parseLong(physicianInfo.get("ID")),
+                        startDateRange, endDateRange).size() > 0) {
+                    result.add(physicianInfo);
+                }
+            }
+            return result;
+        }
+        return null;
+    }
+    public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization,
+                                                                             Date startDateRange,
+                                                                             Date endDateRange)
+    {
+        String[] projection = {
+                dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID
+        };
+
+        String selection = dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION + " = ?";
+        String[] selectionArgs = { specialization };
+        ArrayList<HashMap<String,String>> result;
+
+        if (specialization.equalsIgnoreCase("any")) {
+            selection = null;
+            selectionArgs = null;
+        }
+
+        Cursor mCursor =
+                db.query(
+                        dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        null
+                );
+        if (mCursor != null && mCursor.moveToFirst()) {
+            result = new ArrayList<HashMap<String,String>>();
+
+            HashMap<String,String> physicianInfo = getPhysicianInfo(mCursor.getLong(0));
+
+            if (getTimeSlotsAvailableForPhysician( Long.parseLong(physicianInfo.get("ID")),
+                    startDateRange, endDateRange).size() > 0) {
+                result.add(physicianInfo);
+            }
+
+            while (mCursor.moveToNext()) {
+                physicianInfo = getPhysicianInfo(mCursor.getLong(0));
+
+                if (getTimeSlotsAvailableForPhysician( Long.parseLong(physicianInfo.get("ID")),
+                        startDateRange, endDateRange).size() > 0) {
+                    result.add(physicianInfo);
+                }
+            }
+            return result;
+        }
+        return null;
+    }
+    public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization,
+                                                                             String location,
                                                                              float range)
     {
         String[] projection = {
@@ -643,6 +745,11 @@ public class QADBHelper
         String selection = dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION + " = ?";
         String[] selectionArgs = { specialization };
         ArrayList<HashMap<String,String>> result;
+
+        if (specialization.equalsIgnoreCase("any")) {
+            selection = null;
+            selectionArgs = null;
+        }
 
         Cursor mCursor =
                 db.query(
@@ -692,6 +799,11 @@ public class QADBHelper
         String[] selectionArgs = { specialization };
         ArrayList<HashMap<String,String>> result;
 
+        if (specialization.equalsIgnoreCase("any")) {
+            selection = null;
+            selectionArgs = null;
+        }
+
         Cursor mCursor =
                 db.query(
                         dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_NAME,
@@ -702,6 +814,8 @@ public class QADBHelper
                         null,
                         null
                 );
+
+
         if (mCursor != null && mCursor.moveToFirst()) {
             result = new ArrayList<HashMap<String,String>>();
 
