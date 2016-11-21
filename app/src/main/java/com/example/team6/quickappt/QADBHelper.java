@@ -951,6 +951,9 @@ public class QADBHelper
                 2016, 11, 28, 22, 30,
                 2016, 11, 28, 24, 40);
     }
+<<<<<<< HEAD
+// Test comment for commit purposes
+=======
 
 
 
@@ -1086,6 +1089,7 @@ public class QADBHelper
         }
         return result;
     }
+>>>>>>> c8c49fbcee65074e7f51c5309d6a4e80ba1177d6
 }
 
 
