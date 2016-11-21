@@ -24,9 +24,22 @@ All of the methods shown below are located in the <a href="https://github.com/ac
   - [addPhysicianSpecialization(long id, String specialization)](#addPhysicianSpecialization(long id, String specialization))
   - [getPhysicianSpecializations(long id)](#getPhysicianSpecializations(long id))
   - [getPhysiciansWithSpecialization(String specialization, ...)](#getPhysiciansWithSpecialization(String specialization, ...))
+5. [Appointment Methods](#Appointment Methods)
   - [addAppointment(long patientID, long physicianID, ...)](#addAppointment(long patientID, long physicianID, ...))
   - [addTimeBlockForPhysician(long physicianID, Date startDateTime, Date endDateTime)](#addTimeBlockForPhysician(long physicianID, Date startDateTime, Date endDateTime))
-5. [Appointment Methods](#Appointment Methods)
+  - [getAllAppointmentsForPatient(long patientID)](#getAllAppointmentsForPatient(long patientID))
+  - [getPastAppointmentsForPatient(long patientID)](#getPastAppointmentsForPatient(long patientID))
+  - [getUpcomingAppointmentsForPatient(long patientID)](#getUpcomingAppointmentsForPatient(long patientID))
+  - [timeSlotAvailableForPatient(long patientID, Date startDateTime, Date endDateTime)](#timeSlotAvailableForPatient(long patientID, Date startDateTime, Date endDateTime))
+  - [getAllAppointmentsForPhysician(long physicianID)](#getAllAppointmentsForPhysician(long physicianID))
+  - [getPastAppointmentsForPhysician(long physicianID)](#getPastAppointmentsForPhysician(long physicianID))
+  - [getUpcomingAppointmentsForPhysician(long physicianID)](#getUpcomingAppointmentsForPhysician(long physicianID))
+  - [timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime)](#timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime))
+  - [getTimeSlotsAvailableForPhysician(long physicianID, ...)](#getTimeSlotsAvailableForPhysician(long physicianID, ...))
+6. [General Helper Methods](#General Helper Methods)
+  - [getDate(int year, ...)](#getDate(int year, ...))
+  - [getDistance(String location1, String location2)](#getDistance(String location1, String location2))
+  
 
 ## QADB Helper
 In order to use the API methods, you must create an instance of the QADBHelper class inside a context. After initialization, calling the `open()` method creates the database and allows for proper use of the API. Once finished using the class inside the application, it is good practice to call the `close()` method to shut down the database helper.
@@ -513,6 +526,7 @@ if ( mDB.addTimeBlockForPhysician(long physicianID, Date startDateTime, Date end
 }
 ```
 ======
+<a name="getAllAppointmentsForPatient(long patientID)"/>
 ```java
 public ArrayList<PatientAppointmentInfo> getAllAppointmentsForPatient(long patientID)
 ```
@@ -552,6 +566,7 @@ for (PatientAppointmentInfo appointment : appointments) {
 }
 ```
 ======
+<a name="getPastAppointmentsForPatient(long patientID)"/>
 ```java
 public ArrayList<PatientAppointmentInfo> getPastAppointmentsForPatient(long patientID)
 ```
@@ -571,6 +586,7 @@ Returns a list of <b>upcoming</b> appointments for a patient. A `PatientAppointm
 &emsp;Please see the `getAllAppointmentsForPatient(long patientID)` method for example usage.
 
 ======
+<a name="getUpcomingAppointmentsForPatient(long patientID)"/>
 ```java
 public ArrayList<PatientAppointmentInfo> getUpcomingAppointmentsForPatient(long patientID)
 ```
@@ -590,6 +606,7 @@ Returns a list of <b>upcoming</b> appointments for a patient. A `PatientAppointm
 &emsp;Please see the `getAllAppointmentsForPatient(long patientID)` method for example usage.
 
 ======
+<a name="timeSlotAvailableForPatient(long patientID, Date startDateTime, Date endDateTime)"/>
 ```java
 public boolean timeSlotAvailableForPatient(long patientID, Date startDateTime, Date endDateTime)
 ```
@@ -617,6 +634,7 @@ if ( mDB.timeSlotAvailableForPatient(patientID, start, end) ) {
 }
 ```
 ======
+<a name="getAllAppointmentsForPhysician(long physicianID)"/>
 ```java
 public ArrayList<PhysicianAppointmentInfo> getAllAppointmentsForPhysician(long physicianID)
 ```
@@ -656,6 +674,7 @@ for (PhysicianAppointmentInfo appointment : appointments) {
 }
 ```
 ======
+<a name="getPastAppointmentsForPhysician(long physicianID)"/>
 ```java
 public ArrayList<PhysicianAppointmentInfo> getPastAppointmentsForPhysician(long physicianID)
 ```
@@ -675,6 +694,7 @@ Returns a list of <b>past</b> appointments for a physician. A `PhysicianAppointm
 &emsp;Please see the `getAllAppointmentsForPhysician(long physicianID)` method for example usage.
 
 ======
+<a name="getUpcomingAppointmentsForPhysician(long physicianID)"/>
 ```java
 public ArrayList<PhysicianAppointmentInfo> getUpcomingAppointmentsForPhysician(long physicianID)
 ```
@@ -694,6 +714,7 @@ Returns a list of <b>upcoming</b> appointments for a physician. A `PhysicianAppo
 &emsp;Please see the `getAllAppointmentsForPhysician(long physicianID)` method for example usage.
 
 ======
+<a name="timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime)"/>
 ```java
 public boolean timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime)
 ```
@@ -722,6 +743,7 @@ if ( mDB.timeSlotAvailableForPhysician(physicianID, start, end) ) {
 ```
 
 ======
+<a name="getTimeSlotsAvailableForPhysician(long physicianID, ...)"/>
 ```java
 public ArrayList<Pair<Date,Date>> getTimeSlotsAvailableForPhysician(long physicianID, 
                                                                     Date startDateTime, 
@@ -753,6 +775,7 @@ for (Pair<Date,Date> timeSlot : mDB.getTimeSlotsAvailableForPhysician(physicianI
 
 <a name="General Helper Methods"/>
 ## General helper methods
+<a name="getDate(int year, ...)"/>
 ```java
 public Date getDate(int year, int month, int day, int hour, int minute)   // for specific date-times
 public Date getDate(int year, int month, int day)                         // for general dates (such as birth dates)
@@ -774,6 +797,7 @@ Date d1 = mDB.getDate(2016, 11, 28, 1, 0);
 Date d2 = mDB.getDate(2016, 11, 28);
 ```
 ======
+<a name="getDistance(String location1, String location2)"/>
 ```java
 public float getDistance(String location1, String location2)
 ```
