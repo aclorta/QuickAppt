@@ -9,5 +9,58 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.team6.quickappt.Physician_activity">
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="First Name"
+        android:ems="10"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:id="@+id/editText"
+        android:hint="First Name" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="Last Name"
+        android:ems="10"
+        android:layout_below="@+id/editText"
+        android:layout_alignParentStart="true"
+        android:id="@+id/editText2"
+        android:hint="Last Name" />
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="Last Name"
+        android:ems="10"
+        android:layout_below="@+id/editText"
+        android:layout_alignParentStart="true"
+        android:id="@+id/editText4"
+        android:hint="Last Name" />
+
+
+    <TextView
+        android:text="TextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView"
+        android:layout_alignParentStart="true"
+        tools:text="Specialization"
+        android:textAppearance="@style/TextAppearance.AppCompat"
+        android:layout_below="@+id/editText2" />
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="Specialization"
+        android:ems="10"
+        android:layout_below="@+id/textView"
+        android:layout_alignParentStart="true"
+        android:id="@+id/editText3"
+        android:hint="Specialization" />
+
 
 </RelativeLayout>
