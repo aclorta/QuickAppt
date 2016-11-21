@@ -10,7 +10,6 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.location.Address;
-import android.util.Log;
 import android.util.Pair;
 import android.location.Geocoder;
 import android.location.Location;
@@ -26,14 +25,7 @@ import java.text.ParsePosition;
 
 public class QADBHelper
 {
-    public static final String TAG = "DBAdapter";
-
-
-    private static final String DATABASE_CREATE =
-            "create table titles (_id integer primary key autoincrement, "
-                    + "isbn text not null, title text not null, "
-                    + "publisher text not null);\n";
-
+    private static boolean initialized = false;
 
     private final Context context;
     private DatabaseHelper DBHelper;
@@ -83,10 +75,6 @@ public class QADBHelper
         public void onUpgrade(SQLiteDatabase db, int oldVersion,
                               int newVersion)
         {
-            Log.w(TAG, "Upgrading database from version " + oldVersion
-                    + " to "
-                    + newVersion + ", which will destroy all old data");
-            db.execSQL("DROP TABLE IF EXISTS titles");
             onCreate(db);
         }
     }
@@ -197,7 +185,10 @@ public class QADBHelper
         // Add null user into database
         addPatient(0,"","",getDate(0,0,0),"","","","","","","","","","","","","");
 
-        addTestData();
+        if (!initialized)
+            addTestData();
+
+        initialized = true;
         return this;
     }
 
@@ -494,12 +485,13 @@ public class QADBHelper
 
         long result = db.insert(dbStrings.PHYSICIAN_TABLE_NAME, null, initialValues);
 
+        // Insert into specialization database
         for (String specialization : specializations) {
             addPhysicianSpecialization(id, specialization);
         }
 
-        // Insert into specialization database, return the User ID of physician
-        return result;
+        // return the User ID of physician
+        return id;
     }
 
     public long addPhysician(String username, String password,
@@ -932,7 +924,6 @@ public class QADBHelper
             if (timeSlotAvailableForPhysician(physicianID, newApptStart, newApptEnd)) {
                 result.add(new Pair<Date,Date>(newApptStart, newApptEnd));
                 System.out.println("start = " + newApptStart + ", end = " + newApptEnd);
-
                 if (result.size() > maxResultSize)
                     return result;
             }
@@ -1146,7 +1137,7 @@ public class QADBHelper
     /*
     Returns an address for a specific location, null if not available.
      */
-    public Address getAddress(String location)
+    private Address getAddress(String location)
     {
         try {
             List<Address> result = geocoder.getFromLocationName(location, 1);
