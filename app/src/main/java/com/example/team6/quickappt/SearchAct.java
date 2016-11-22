@@ -32,11 +32,18 @@ public class SearchAct extends AppCompatActivity {
     private String u_ampm, u_ampm2;
     private int hour, minute, year, month, day, u_month, u_year, u_day, u_hour, u_minute, u_hour2, u_minute2;
     private ArrayList<Physician> phys;
+    private QADBHelper mDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_searchact);
+
+//        mDB = new QADBHelper(this);
+//        mDB.open();
+
+
+
         Spinner s = (Spinner) findViewById(R.id.spinner);
 
 //        CalendarSched cal = new CalendarSched();
@@ -51,6 +58,11 @@ public class SearchAct extends AppCompatActivity {
         time  = (EditText) findViewById(R.id.time1);
         time2 = (EditText) findViewById(R.id.time2);
 
+//        final Calendar cal = Calendar.getInstance();
+//        year = cal.get(Calendar.YEAR);
+//        month = cal.get(Calendar.MONTH);
+//        day = cal.get(Calendar.DAY_OF_WEEK);
+//        date.setText((1+month) + "/" + day + "/" + year);
 
         time.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -88,12 +100,14 @@ public class SearchAct extends AppCompatActivity {
         DatePickerDialog tpd = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int day){
-                // System.out.println("date year: "+year);
-                u_month=month+1;
-                u_day = day;
-                u_year = year;
-                date.setText((1+month) + "/" + day + "/" + year);
 
+                if(year != 0) { //checking if date entered
+                    // System.out.println("date year: "+year);
+                    u_month = month + 1;
+                    u_day = day;
+                    u_year = year;
+                    date.setText((1 + month) + "/" + day + "/" + year);
+                }
             }
         },year,month,day);
         tpd.show();
@@ -158,9 +172,7 @@ public class SearchAct extends AppCompatActivity {
     private myTime convertStringtoTime(String time){
         String[] hour_min = time.split(" ");
         int hour, min;
-        for(String s: hour_min){
-            System.out.println("String: "+s);
-        }
+
         if(Integer.parseInt(hour_min[0]) < 12 && hour_min[3].equals("PM")){
             hour = Integer.parseInt(hour_min[0])+12;
 
@@ -169,7 +181,6 @@ public class SearchAct extends AppCompatActivity {
             hour = Integer.parseInt(hour_min[0]);
         }
         min = Integer.parseInt(hour_min[2]);
-        System.out.println("removing: "+hour+" min "+min);
         return new myTime(hour,min);
     }
     public void bookNow(View v){
@@ -180,24 +191,7 @@ public class SearchAct extends AppCompatActivity {
 
 //        TextView tv = (TextView) selectedRow.getChildAt(3);
 //        String name = tv.getText().toString();
-//        TextView tv2 = (TextView) selectedRow.getChildAt(2);
-//        String time = tv2.getText().toString();
-//
-//        System.out.println("name: "+name);
-//        for(Physician p : phys) {
-//            if (name.equals(p.getName())){
-//                System.out.println("MADE IT!");
-//                myTime myTime = convertStringtoTime(time);
-//                p.getAppointments().removeTime(myTime);
-//            }
-//        }
 
-//        Intent intent = new Intent(this, PatientCalendar.class);
-//        TextView tv = (TextView)selectedRow.getChildAt(2) ;
-//        String physician = tv.getText().toString();
-//        //System.out.println("phys chosen: "+physician);
-//        intent.putExtra("Physician",physician);
-//        startActivity(intent);
 
     }
     public void setOnClick(final TableRow tr) {
@@ -262,6 +256,10 @@ public class SearchAct extends AppCompatActivity {
         return tr1;
     }
 
+    public void goHome(View v){
+        startActivity(new Intent(SearchAct.this, HomeScreen.class));
+    }
+
     public void findSearch(View v) {
 
         TableLayout table = (TableLayout)findViewById(R.id.table);
@@ -272,19 +270,34 @@ public class SearchAct extends AppCompatActivity {
         EditText zip = (EditText) findViewById(R.id.editText);
         String zipCode = zip.getText().toString();
 
+        final Calendar calen = Calendar.getInstance(); // set default date
+        year = calen.get(Calendar.YEAR);
+        month = calen.get(Calendar.MONTH);
+        day = calen.get(Calendar.DAY_OF_WEEK);
+        date.setText((1 + month) + "/" + day + "/" + year);
+
 
         CalendarSched cal = new CalendarSched();
         cal.initCalendar();
         cal.initTime();
-        Physician p1 = new Physician("Dr. Lee", cal, "Cardiologist", "92617", "1 mi");
-        Physician p2 = new Physician("Dr. Sayed", cal, "Gen. Physician", "92617", "1.5 mi");
-        Physician p3 = new Physician("Dr. Strange", cal, "Optometrist", "92688", "2 mi");
+        Physician p1 = new Physician("Dr. Kim", cal, "Cardiologist", "92617", "1 mi");
+        Physician p2 = new Physician("Dr. Sayed", cal, "Dentist", "92617", "1.5 mi");
+        Physician p3 = new Physician("Dr. Yee", cal, "Dermatologist", "92617", "14 mi");
+        Physician p4 = new Physician("Dr. Lorta", cal, "Gen. Physician", "92617", "15 mi");
+        Physician p5 = new Physician("Dr. Morte", cal, "Neurologist", "92615", "15 mi");
+        Physician p6 = new Physician("Dr. Lorta", cal, "Optometrist", "92615", "15 mi");
+        Physician p7 = new Physician("Dr. Ooi", cal, "Psychologit", "92615", "15 mi");
+        Physician p8 = new Physician("Dr. Mcknight", cal, "Therapist", "92615", "15 mi");
+
 
         phys.add(p1);
         phys.add(p2);
         phys.add(p3);
-
-
+        phys.add(p4);
+        phys.add(p5);
+        phys.add(p6);
+        phys.add(p7);
+        phys.add(p8);
 
 
         String specialist = findSpecialist();
@@ -356,10 +369,16 @@ public class SearchAct extends AppCompatActivity {
     }
     public void initSpecialist(Spinner s) {
         specialist.add("Cardiologist");
+        specialist.add("Dentist");
+        specialist.add("Dermatologist");
         specialist.add("Gen. Physician");
+        specialist.add("Neurologist");
         specialist.add("Optometrist");
         specialist.add("Psychologist");
-        specialist.add("Neurologist");
+        specialist.add("Therapist");
+
+
+
         specialist.add("Any");
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, specialist);
         s.setAdapter(adapter);
