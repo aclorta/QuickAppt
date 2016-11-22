@@ -3,7 +3,9 @@ package com.example.team6.quickappt;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -27,6 +29,8 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -38,12 +42,7 @@ import static android.Manifest.permission.READ_CONTACTS;
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
-
-    /**
-     * Id to identity READ_CONTACTS permission request.
-     */
-    private static final int REQUEST_READ_CONTACTS = 0;
+public class LoginActivity extends AppCompatActivity {
 
     /**
      * A dummy authentication store containing known user names and passwords.
@@ -58,22 +57,28 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private UserLoginTask mAuthTask = null;
 
     // UI references.
-    private AutoCompleteTextView mEmailView;
+    private EditText mEmailView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private View mRadioGroupView;
 
     private QADBHelper mDB;
+
+    private boolean isPatient = true;
+    private boolean isPatientRadio = true;
+    private boolean isRadioClicked = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         // Set up the login form.
-        mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
-        populateAutoComplete();
-
+        mEmailView = (EditText) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
+        mRadioGroupView = (RadioGroup) findViewById(R.id.radioButtonGroup);
+
+        // Triggers when user hits 'Enter'
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
@@ -98,51 +103,31 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         mDB = new QADBHelper(this);
         mDB.open();
+
     }
 
-    private void populateAutoComplete() {
-        if (!mayRequestContacts()) {
-            return;
-        }
+    public void onRadioButtonClicked(View view) {
+        boolean checked = ((RadioButton) view).isChecked();
 
-        getLoaderManager().initLoader(0, null, this);
-    }
-
-    private boolean mayRequestContacts() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return true;
-        }
-        if (checkSelfPermission(READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        }
-        if (shouldShowRequestPermissionRationale(READ_CONTACTS)) {
-            Snackbar.make(mEmailView, R.string.permission_rationale, Snackbar.LENGTH_INDEFINITE)
-                    .setAction(android.R.string.ok, new View.OnClickListener() {
-                        @Override
-                        @TargetApi(Build.VERSION_CODES.M)
-                        public void onClick(View v) {
-                            requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
-                        }
-                    });
-        } else {
-            requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
-        }
-        return false;
-    }
-
-    /**
-     * Callback received when a permissions request has been completed.
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_READ_CONTACTS) {
-            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                populateAutoComplete();
-            }
+        switch(view.getId()) {
+            case R.id.radioButton_patient:
+                if (checked) {
+                    // Patient
+//                    System.out.println("I'm a patient");
+                    isPatientRadio = true;
+                    isRadioClicked = true;
+                }
+                break;
+            case R.id.radioButton_physician:
+                if (checked) {
+                    // Physician
+//                    System.out.println("I'm a physician");
+                    isPatientRadio = false;
+                    isRadioClicked = true;
+                }
+                break;
         }
     }
-
 
     /**
      * Attempts to sign in or register the account specified by the login form.
@@ -153,8 +138,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         if (mAuthTask != null) {
             return;
         }
-
-        /* Our only two users in the database are: {hello, world} and {foobar, barfoo} */
 
         // Reset errors.
         mEmailView.setError(null);
@@ -168,7 +151,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         View focusView = null;
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+        if (TextUtils.isEmpty(password)) {
+            mPasswordView.setError(getString(R.string.error_field_required));
+            focusView = mPasswordView;
+            cancel = true;
+        } else if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
             cancel = true;
@@ -179,15 +166,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mEmailView.setError(getString(R.string.error_field_required));
             focusView = mEmailView;
             cancel = true;
+        }
 
-        } else if (/* !isEmailValid(email) */ !isUsernameValid(email)) {   // Christian: Are we using e-mail or username?
-            mEmailView.setError(getString(R.string.error_invalid_email));
-            focusView = mEmailView;
-            cancel = true;
-        } else if (!mDB.userExists(email)) {
-            mEmailView.setError(getString(R.string.error_invalid_user));
-            focusView = mEmailView;
-            cancel = true;
+        // Check whether user exists and that their login information is correct
+        // If user does not exist, send them to profile page in order to create
+        // new account
+        if (!mDB.userExists(email) && !cancel) {
+            createUser(email, password);
+            return;
         } else if (!mDB.loginValid(email, password)) {
             mEmailView.setError(getString(R.string.error_invalid_login));
             focusView = mEmailView;
@@ -199,48 +185,52 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // form field with an error.
             focusView.requestFocus();
         } else {
+
+            // Determine where to send user, then send them there with relevant information
+            long userID = mDB.getUserID(email);
+
+            if (mDB.isPatient(userID)) {
+                isPatient = true;
+                Intent intent = new Intent(getApplicationContext(), HomeScreen.class);
+                intent.putExtra("userID", userID);
+                startActivity(intent);
+            } else {
+                isPatient = false;
+                Intent intent = new Intent(getApplicationContext(), Physician_Profile.class);
+                intent.putExtra("userID", userID);
+                startActivity(intent);
+	    }
+	}
+
+
+
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
-
-            long userID = mDB.getUserID(email);
-            System.out.println("Successfully logged in! User ID = " + userID);
-            if (mDB.isPatient(userID)) {
-                System.out.println("Info for patient = " + mDB.getPatientInfo(userID));
-                System.out.println("All appointments for patient = " + mDB.getAllAppointmentsForPatient(userID));
-                System.out.println("Upcoming appointments for patient = " + mDB.getUpcomingAppointmentsForPatient(userID));
-                System.out.println("Physicians w/specialization 'Cardiologist' = " + mDB.getPhysiciansWithSpecialization("Cardiologist",
-                                                                                                                        "92617"
-                ));
-
-            }
-            else if (mDB.isPhysician(userID)) {
-                System.out.println("Info for physician = " + mDB.getPhysicianInfo(userID));
-                System.out.println("Physicians with specialization 'Cardiologist' = " + mDB.getPhysiciansWithSpecialization("Cardiologist"));
-                System.out.println("All appointments for physician = " + mDB.getAllAppointmentsForPhysician(userID));
-                System.out.println("Upcoming appointments for physician = " + mDB.getUpcomingAppointmentsForPhysician(userID));
-                System.out.println("Available time slots (11/28) = " + mDB.getTimeSlotsAvailableForPhysician(userID,
-                                                    mDB.getDate(2016, 11, 28, 7, 15),
-                                                    mDB.getDate(2016, 11, 28, 21, 0)));
-
-            }
-            else {
-                System.out.println("Could not get info for user");
-            }
-
-            mAuthTask.execute((Void) null);
-            mDB.close();
+//            showProgress(true);
+//            mAuthTask = new UserLoginTask(email, password);
+//            mAuthTask.execute((Void) null);
+//            mDB.close();
         }
+    }
+
+    private void createUser(String email, String password) {
+        if (isPatientRadio) {
+            Intent intent = new Intent(getApplicationContext(), Patient_profile.class);
+            intent.putExtra("email", email);
+            intent.putExtra("password", password);
+            startActivity(intent);
+        } else {
+            Intent intent = new Intent(getApplicationContext(), Physician_activity.class);
+            intent.putExtra("email", email);
+            intent.putExtra("password", password);
+            startActivity(intent);
+        }
+
     }
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
         return email.contains("@");
-    }
-    private boolean isUsernameValid(String username) {
-        //TODO: Replace this with your own logic
-        return username.length() > 3 || isEmailValid(username);
     }
 
     private boolean isPasswordValid(String password) {
@@ -282,60 +272,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
         }
-    }
-
-    @Override
-    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        return new CursorLoader(this,
-                // Retrieve data rows for the device user's 'profile' contact.
-                Uri.withAppendedPath(ContactsContract.Profile.CONTENT_URI,
-                        ContactsContract.Contacts.Data.CONTENT_DIRECTORY), ProfileQuery.PROJECTION,
-
-                // Select only email addresses.
-                ContactsContract.Contacts.Data.MIMETYPE +
-                        " = ?", new String[]{ContactsContract.CommonDataKinds.Email
-                .CONTENT_ITEM_TYPE},
-
-                // Show primary email addresses first. Note that there won't be
-                // a primary email address if the user hasn't specified one.
-                ContactsContract.Contacts.Data.IS_PRIMARY + " DESC");
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        List<String> emails = new ArrayList<>();
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            emails.add(cursor.getString(ProfileQuery.ADDRESS));
-            cursor.moveToNext();
-        }
-
-        addEmailsToAutoComplete(emails);
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> cursorLoader) {
-
-    }
-
-    private void addEmailsToAutoComplete(List<String> emailAddressCollection) {
-        //Create adapter to tell the AutoCompleteTextView what to show in its dropdown list.
-        ArrayAdapter<String> adapter =
-                new ArrayAdapter<>(LoginActivity.this,
-                        android.R.layout.simple_dropdown_item_1line, emailAddressCollection);
-
-        mEmailView.setAdapter(adapter);
-    }
-
-
-    private interface ProfileQuery {
-        String[] PROJECTION = {
-                ContactsContract.CommonDataKinds.Email.ADDRESS,
-                ContactsContract.CommonDataKinds.Email.IS_PRIMARY,
-        };
-
-        int ADDRESS = 0;
-        int IS_PRIMARY = 1;
     }
 
     /**

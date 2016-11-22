@@ -14,9 +14,32 @@ All of the methods shown below are located in the <a href="https://github.com/ac
   - [isNullPatient(long patientID)](#isNullPatient(long patientID))
   - [addPatient( String username, String password, ... )](#addPatient( String username, String password, ... ))
   - [getPatientInfo(long id)](#getPatientInfo(long id))
+  - [isPatient(long id)](#isPatient(long id))
 3. [Physician Methods](#Physician Methods)
+  - [addPhysician(String username, String password, ...)](#addPhysician(String username, String password, ...))
+  - [isPatient(long id)](#isPatient(long id))
+  - [getPhysicianInfo(long id)](#getPhysicianInfo(long id))
+  - [isPhysician(long id)](#isPhysician(long id))
 4. [Specialization Methods](#Specialization Methods)
+  - [addPhysicianSpecialization(long id, String specialization)](#addPhysicianSpecialization(long id, String specialization))
+  - [getPhysicianSpecializations(long id)](#getPhysicianSpecializations(long id))
+  - [getPhysiciansWithSpecialization(String specialization, ...)](#getPhysiciansWithSpecialization(String specialization, ...))
 5. [Appointment Methods](#Appointment Methods)
+  - [addAppointment(long patientID, long physicianID, ...)](#addAppointment(long patientID, long physicianID, ...))
+  - [addTimeBlockForPhysician(long physicianID, Date startDateTime, Date endDateTime)](#addTimeBlockForPhysician(long physicianID, Date startDateTime, Date endDateTime))
+  - [getAllAppointmentsForPatient(long patientID)](#getAllAppointmentsForPatient(long patientID))
+  - [getPastAppointmentsForPatient(long patientID)](#getPastAppointmentsForPatient(long patientID))
+  - [getUpcomingAppointmentsForPatient(long patientID)](#getUpcomingAppointmentsForPatient(long patientID))
+  - [timeSlotAvailableForPatient(long patientID, Date startDateTime, Date endDateTime)](#timeSlotAvailableForPatient(long patientID, Date startDateTime, Date endDateTime))
+  - [getAllAppointmentsForPhysician(long physicianID)](#getAllAppointmentsForPhysician(long physicianID))
+  - [getPastAppointmentsForPhysician(long physicianID)](#getPastAppointmentsForPhysician(long physicianID))
+  - [getUpcomingAppointmentsForPhysician(long physicianID)](#getUpcomingAppointmentsForPhysician(long physicianID))
+  - [timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime)](#timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime))
+  - [getTimeSlotsAvailableForPhysician(long physicianID, ...)](#getTimeSlotsAvailableForPhysician(long physicianID, ...))
+6. [General Helper Methods](#General Helper Methods)
+  - [getDate(int year, ...)](#getDate(int year, ...))
+  - [getDistance(String location1, String location2)](#getDistance(String location1, String location2))
+  
 
 ## QADB Helper
 In order to use the API methods, you must create an instance of the QADBHelper class inside a context. After initialization, calling the `open()` method creates the database and allows for proper use of the API. Once finished using the class inside the application, it is good practice to call the `close()` method to shut down the database helper.
@@ -220,6 +243,7 @@ System.out.println( " ID = " + patientInfo["ID"] +
 );
 ```
 ======
+<a name="isPatient(long id)"/>
 ```java
 public boolean isPatient(long id)
 ```
@@ -240,11 +264,13 @@ if (mDB.isPatient(patientID)) {
 <a name="Physician Methods"/>
 ## Physician table Methods
 
+<a name="addPhysician(String username, String password, ...)"/>
 ```java
-public long addPhysician( String username, String password, 
-                          String name, String gender, 
-                          String phone, String email, String location, 
-                          String[] specializations)
+public long addPhysician(String username, String password,
+                         String name, String gender,
+                         String phone, String email,
+                         String location, int startHour, int endHour,
+                         String[] specializations)
 ```
 ###### Description
 Adds a physician into the database with given parameters. There is also another `addPhysician(...)` function that replaces the first two parameters of this function with the `physicianID`, but this is <b>not</b> recommended, as the ID is automatically generated for user creation in this method call.
@@ -260,6 +286,8 @@ Adds a physician into the database with given parameters. There is also another 
 - `String phone` - phone number of physician (<b><u>must</u></b> be in format XXXYYYZZZZ)
 - `String email` - email contact for physician
 - `String location` - location of primary hospital for physician
+- `int startHour` - time of day that physician starts availability (24-Hour time, so hours range from 0:00 - 24:00)
+- `int endHour` - time of day that physician stops availability (24-Hour time, so hours range from 0:00 - 24:00)
 - `String[] specializations` - specializations for the physician (eg. {"Cardiologist", "Exercise Specialist", ...})
 
 ###### Example usage
@@ -271,12 +299,14 @@ long physicianID = mDB.addPhysician(  "Christian123",                           
                                       "4082345678",                                               // Phone
                                       "morte@christian.com",                                      // Email
                                       "1234 One Road Irvine, CA 95131",                           // Location
+                                      7, 19,                                                      // Hours: 7AM - 7PM
                                       new String[]{"Cardiologist", "Exercise Specialist"});       // Specializations
 );
 
 System.out.println("The ID for the new physician user = " + physicianID);
 ```
 ======
+<a name="getPhysicianInfo(long id)"/>
 ```java
 public HashMap<String,String> getPhysicianInfo(long id)
 ```
@@ -294,12 +324,13 @@ long physicianID = mDB.getUserID("enter username here");
 HashMap<String,String> physicianInfo = mDB.getPhysicianInfo(physicianID);
 
 // Output physician information
-System.out.println( " ID = " + physicianInfo["ID"] +
-                    " Name = " + physicianInfo["Name"] +
-                    " Gender = " + physicianInfo["Gender"] +
-                    " Phone = " + physicianInfo["Phone"] +
-                    " Email = " + physicianInfo["Email"] +
-                    " Location = " + physicianInfo["Location"]
+System.out.println( " ID = " + physicianInfo.get("ID") +
+                    " Name = " + physicianInfo.get("Name") +
+                    " Gender = " + physicianInfo.get("Gender") +
+                    " Phone = " + physicianInfo.get("Phone") +
+                    " Email = " + physicianInfo.get("Email") +
+                    " Location = " + physicianInfo.get("Location") +
+                    " Hours = " + physicianInfo.get("StartHour") + " AM - " + physicianInfo.get("EndHour") + " PM"
 );
 
 // Output physician specializations
@@ -308,6 +339,7 @@ for (String specialization : physicianInfo["Specializations"]) {
   System.out.print( specialization + ", " );
 ```
 ======
+<a name="isPhysician(long id)"/>
 ```java
 public boolean isPhysician(long id)
 ```
@@ -326,6 +358,7 @@ if (mDB.isPhysician(physicianId)) {
 ======
 <a name="Specialization Methods"/>
 ## Specialization table Methods
+<a name="addPhysicianSpecialization(long id, String specialization)"/>
 ```java
 public long addPhysicianSpecialization(long id, String specialization)
 ```
@@ -346,28 +379,9 @@ if (specializationRow == -1) {
   // specialization added, do something here
 }
 ```
-======
-```java
-public long addPhysicianSpecialization(long id, String specialization)
-```
-###### Return value
-&emsp;Returns the row ID of the new specialization added in the table, -1 if an error occurred.
-###### Parameters
-- `long id` - unique ID for a physician user
-- `String specialization` - specialization to be added for physician
 
-###### Example usage
-```java
-long physicianId = mDB.getUserID("enter physician username here");
-
-long specializationRow = addPhysicianSpecialization(physicianID, "Cardiologist");
-if (specializationRow == -1) {
-  // specialization was not added, do something here
-} else {
-  // specialization added, do something here
-}
-```
 ======
+<a name="getPhysicianSpecializations(long id)"/>
 ```java
 public ArrayList<String> getPhysicianSpecializations(long id)
 ```
@@ -386,32 +400,54 @@ for (String specialization : specializations) {
 }
 ```
 ======
+<a name="getPhysiciansWithSpecialization(String specialization, ...)"/>
 ```java
 public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization)
+public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization,
+                                                                         String location)
+public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization,
+                                                                         String location,
+                                                                         float range)
 ```
+###### Description
+This is one of the main queries of QuickAppt. Here we search for a list of Physicians with a given <i>specialization</i>, centered around a <i>location</i> and a given <i>range</i>. If location is not specified, then the search finds all physicians with a given specialization. If location is specified, but <b>not</b> range, then the search looks for physicians 25 miles away from the specified location. If the range is specified, then the search looks for physicians within the range provided.
+
+**IMPORTANT**: Because some locations provided might not calculate the correct distance because of an error, then by default physicians with unknown distances are added to the list (granted, they still have the specified specialization).
 ###### Return value
-&emsp;Returns an `ArrayList<HashMap<String,String>>` of physicians given a specialization, or `null` if an error occurred. 
+&emsp;Returns an `ArrayList<HashMap<String,String>>` of physicians given a specialization, location, and range. Returns `null` if an error occurred. 
 ###### Parameters
 - `String specialization` - specialization string for query
+- `String location` - central location to search for physicians
+- `float range` - range of search from location
 
 ###### Example usage
 ```java
 String specialization = "Cardiologist";
-ArrayList<HashMap<String,String>> physiciansWithSpecialization = getPhysiciansWithSpecialization(specialization);
+ArrayList<HashMap<String,String>> physiciansWithSpecialization = getPhysiciansWithSpecialization(specialization,
+                                                                                                 "Irvine, CA",
+                                                                                                 25
+);
 
 for ( HashMap<String,String> physicianInfo : physiciansWithSpecialization ) {
-  System.out.println( " ID = " + physicianInfo["ID"] +
-                      " Name = " + physicianInfo["Name"] +
-                      " Gender = " + physicianInfo["Gender"] +
-                      " Phone = " + physicianInfo["Phone"] +
-                      " Email = " + physicianInfo["Email"] +
-                      " Location = " + physicianInfo["Location"]
-  );
+  System.out.println( " ID = " + physicianInfo.get("ID") +
+                      " Name = " + physicianInfo.get("Name"]) +
+                      " Gender = " + physicianInfo.get("Gender") +
+                      " Phone = " + physicianInfo.get("Phone") +
+                      " Email = " + physicianInfo.get("Email") +
+                      " Location = " + physicianInfo.get("Location") +
+                      " Hours = " + physicianInfo.get("StartHour") + " AM - " + physicianInfo.get("EndHour") + " PM"
+);
+
+// Output physician specializations
+System.out.println("Specializations = ");
+for (String specialization : physicianInfo["Specializations"]) {
+  System.out.print( specialization + ", " );
 }
 ```
 ======
 <a name="Appointment Methods"/>
 ## Appointment table Methods
+<a name="addAppointment(long patientID, long physicianID, ...)"/>
 ```java
 public long addAppointment(long patientID, long physicianID, Date startDate, Date endDate)
 public long addAppointment(   long patientID, long physicianID,
@@ -460,6 +496,7 @@ if ( mDB.addAppointment(patientId, physicianId,
 }
 ```
 ======
+<a name="addTimeBlockForPhysician(long physicianID, Date startDateTime, Date endDateTime)"/>
 ```java
 public long addTimeBlockForPhysician(long physicianID, Date startDateTime, Date endDateTime)
 ```
@@ -489,6 +526,7 @@ if ( mDB.addTimeBlockForPhysician(long physicianID, Date startDateTime, Date end
 }
 ```
 ======
+<a name="getAllAppointmentsForPatient(long patientID)"/>
 ```java
 public ArrayList<PatientAppointmentInfo> getAllAppointmentsForPatient(long patientID)
 ```
@@ -528,6 +566,27 @@ for (PatientAppointmentInfo appointment : appointments) {
 }
 ```
 ======
+<a name="getPastAppointmentsForPatient(long patientID)"/>
+```java
+public ArrayList<PatientAppointmentInfo> getPastAppointmentsForPatient(long patientID)
+```
+###### Description
+Returns a list of <b>upcoming</b> appointments for a patient. A `PatientAppointmentInfo` object has three getter methods for information for the appointment:
+  - `physicianID()` - returns a `long` ID for associated physician in appointment
+  - `startDateTime()` - returns a `Date` object for the start date-time of appointment
+  - `endDateTime()` - returns a `Date` object for the end date-time of appointment
+  
+###### Return value
+&emsp;Returns an `ArrayList<PatientAppointmentInfo>` of <b>upcoming</b> appointments for a patient. Returns an <b>empty</b> list if a patient has no upcoming appointments. Returns `null` if an error occurred (eg. patientID does not exist in database).
+
+###### Parameters
+- `long patientID` - unique ID for a patient user
+
+###### Example usage
+&emsp;Please see the `getAllAppointmentsForPatient(long patientID)` method for example usage.
+
+======
+<a name="getUpcomingAppointmentsForPatient(long patientID)"/>
 ```java
 public ArrayList<PatientAppointmentInfo> getUpcomingAppointmentsForPatient(long patientID)
 ```
@@ -547,6 +606,7 @@ Returns a list of <b>upcoming</b> appointments for a patient. A `PatientAppointm
 &emsp;Please see the `getAllAppointmentsForPatient(long patientID)` method for example usage.
 
 ======
+<a name="timeSlotAvailableForPatient(long patientID, Date startDateTime, Date endDateTime)"/>
 ```java
 public boolean timeSlotAvailableForPatient(long patientID, Date startDateTime, Date endDateTime)
 ```
@@ -574,6 +634,7 @@ if ( mDB.timeSlotAvailableForPatient(patientID, start, end) ) {
 }
 ```
 ======
+<a name="getAllAppointmentsForPhysician(long physicianID)"/>
 ```java
 public ArrayList<PhysicianAppointmentInfo> getAllAppointmentsForPhysician(long physicianID)
 ```
@@ -613,6 +674,27 @@ for (PhysicianAppointmentInfo appointment : appointments) {
 }
 ```
 ======
+<a name="getPastAppointmentsForPhysician(long physicianID)"/>
+```java
+public ArrayList<PhysicianAppointmentInfo> getPastAppointmentsForPhysician(long physicianID)
+```
+###### Description
+Returns a list of <b>past</b> appointments for a physician. A `PhysicianAppointmentInfo` object has three getter methods for information for the appointment:
+  - `patientID()` - returns a `long` ID for associated patient in appointment
+  - `startDateTime()` - returns a `Date` object for the start date-time of appointment
+  - `endDateTime()` - returns a `Date` object for the end date-time of appointment
+  
+###### Return value
+&emsp;Returns an `ArrayList<PhysicianAppointmentInfo>` of <b>upcoming</b> appointments for a physician. Returns an <b>empty</b> list if a patient has no upcoming appointments. Returns `null` if an error occurred (eg. physicianID does not exist in database).
+
+###### Parameters
+- `long physicianID` - unique ID for a physician user
+
+###### Example usage
+&emsp;Please see the `getAllAppointmentsForPhysician(long physicianID)` method for example usage.
+
+======
+<a name="getUpcomingAppointmentsForPhysician(long physicianID)"/>
 ```java
 public ArrayList<PhysicianAppointmentInfo> getUpcomingAppointmentsForPhysician(long physicianID)
 ```
@@ -632,6 +714,7 @@ Returns a list of <b>upcoming</b> appointments for a physician. A `PhysicianAppo
 &emsp;Please see the `getAllAppointmentsForPhysician(long physicianID)` method for example usage.
 
 ======
+<a name="timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime)"/>
 ```java
 public boolean timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime)
 ```
@@ -659,8 +742,40 @@ if ( mDB.timeSlotAvailableForPhysician(physicianID, start, end) ) {
 }
 ```
 
+======
+<a name="getTimeSlotsAvailableForPhysician(long physicianID, ...)"/>
+```java
+public ArrayList<Pair<Date,Date>> getTimeSlotsAvailableForPhysician(long physicianID, 
+                                                                    Date startDateTime, 
+                                                                    Date endDateTime)
+```
+###### Return value
+&emsp;Returns a list of pairs that contain (start-datetime, end-datetime) for open slots for appointments. Returns null if start date time before end date time, or an error occurred.
+###### Parameters
+- `long physicianID` - unique ID for a physician user
+- `Date startDateTime` - Date object for start of time slot (refer to the `getDate(...)` method for creating dates)
+- `Date endDateTime` - Date object for end of time slot (refer to the `getDate(...)` method for creating dates)
+
+###### Example usage
+```java
+// Physician ID
+long physicianID = 1;
+
+// Look for available time slots from the range Start-End
+// Start = March 5, 2016 8:00 AM
+// End = March 5, 2016 8:00 PM
+Date start = mDB.getDate(2016, 3, 5, 8, 0),
+     end = mDB.getDate(2016, 3, 5, 20, 0);
+
+for (Pair<Date,Date> timeSlot : mDB.getTimeSlotsAvailableForPhysician(physicianID, start, end) ) {
+  System.out.println("The time slot from " + timeSlot.first + " to " + timeSlot.second + " is available."
+  );
+}
+```
+
 <a name="General Helper Methods"/>
 ## General helper methods
+<a name="getDate(int year, ...)"/>
 ```java
 public Date getDate(int year, int month, int day, int hour, int minute)   // for specific date-times
 public Date getDate(int year, int month, int day)                         // for general dates (such as birth dates)
@@ -680,4 +795,23 @@ Date d1 = mDB.getDate(2016, 11, 28, 1, 0);
 
 // d2 = November 28, 2016 (technically, on 12:00 AM)
 Date d2 = mDB.getDate(2016, 11, 28);
+```
+======
+<a name="getDistance(String location1, String location2)"/>
+```java
+public float getDistance(String location1, String location2)
+```
+###### Return value
+&emsp;Returns the distance between two locations (in miles). Returns -1 if an error occurred.
+###### Parameters
+- `String location1` - first location
+- `String location2` - second location
+
+###### Example usage
+```java
+String firstLoc = "Irvine, CA",
+       secondLoc = "Riverside, CA";
+       
+float distance = mDB.getDistance(firstLoc, secondLoc);
+System.out.println("Distance from Irvine to Riverside is " + distance + " miles.");
 ```
