@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-//import org.w3c.dom.Text;
+import org.w3c.dom.Text;
 
 import java.util.HashMap;
 
@@ -19,13 +19,14 @@ public class HomeScreen extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_screen);
-
+//
         QADBHelper mDB = new QADBHelper(this);
         mDB.open();
 
         long patientID = 1;
         HashMap<String,String> patientInfo = mDB.getPatientInfo(patientID);
         String name = patientInfo.get("Name");
+        System.out.println("Name = " + name);
         //String gender = patientInfo.get("Location");
 
         txtClick = (TextView)findViewById(R.id.name_input);

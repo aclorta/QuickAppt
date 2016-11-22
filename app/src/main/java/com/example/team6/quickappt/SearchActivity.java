@@ -30,6 +30,14 @@ public class SearchActivity extends AppCompatActivity {
             initSpecialist(s);
         }
 
+        QADBHelper mDB = new QADBHelper(this);
+        mDB.open();
+
+        long patientID = 1;
+        HashMap<String,String> patientInfo = mDB.getPatientInfo(patientID);
+        String name = patientInfo.get("Name");
+        System.out.println("Name = " + name);
+
 
         //if(!selectedSpecial.isEmpty())
     }

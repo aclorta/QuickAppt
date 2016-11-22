@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import java.util.HashMap;
+
 public class HistoryActivity extends AppCompatActivity {
 
     Button btnClick;
@@ -14,8 +16,15 @@ public class HistoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
+        QADBHelper mDB = new QADBHelper(this);
+        mDB.open();
 
-        btnClick = (Button) findViewById(R.id.edit_btn);
+        long patientID = 1;
+        HashMap<String,String> patientInfo = mDB.getPatientInfo(patientID);
+        String name = patientInfo.get("Name");
+
+
+        btnClick = (Button) findViewById(R.id.home_btn);
         /** Home Button sends user to HomeScreen activity */
 
         btnClick.setOnClickListener(new View.OnClickListener() {

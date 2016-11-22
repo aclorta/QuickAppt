@@ -16,6 +16,7 @@ import java.util.ArrayList;
 
 public class QADBHelper
 {
+    private static boolean initialized = false;
     public static final String KEY_ROWID = "_id",
             KEY_ISBN = "isbn",
             KEY_TITLE = "title",
@@ -108,7 +109,7 @@ public class QADBHelper
         db = DBHelper.getWritableDatabase();
 
         // IMPORTANT: If you don't want to start off with a fresh database each time you restart app, uncomment.
-        dropTables();
+//        dropTables();
 
         db.execSQL(dbStrings.USER_TABLE_CREATE);
         db.execSQL(dbStrings.LOGIN_TABLE_CREATE);
@@ -119,7 +120,9 @@ public class QADBHelper
         db.execSQL(dbStrings.APPOINTMENT_TABLE_CREATE);
         db.execSQL(dbStrings.PATIENT_MEDICAL_HISTORY_TABLE_CREATE);
 
-        addTestData();
+        if (!initialized)
+            addTestData();
+        initialized = true;
         return this;
     }
 
