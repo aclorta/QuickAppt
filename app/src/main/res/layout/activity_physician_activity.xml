@@ -20,6 +20,50 @@
         android:id="@+id/editText"
         android:hint="First Name" />
 
+    <Spinner
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/Checkin"
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown"
+        android:layout_below="@+id/editText3"
+        >
+
+    </Spinner>
+
+    <Spinner
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/AM"
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown"
+        android:layout_toRightOf="@+id/Checkin"
+        android:layout_below="@id/editText3">
+
+    </Spinner>
+
+    <Spinner
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/Checkout"
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown"
+        android:layout_below="@+id/Checkin"
+       >
+
+    </Spinner>
+
+    <Spinner
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/PM"
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown"
+        android:layout_below="@+id/Checkin"
+        android:layout_toRightOf="@id/Checkout">
+
+    </Spinner>
+
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
