@@ -93,6 +93,8 @@ public class QADatabaseStrings {
             PHYSICIAN_TABLE_ATTR_PHONE = "phone",
             PHYSICIAN_TABLE_ATTR_EMAIL = "email",
             PHYSICIAN_TABLE_ATTR_LOCATION = "location",
+            PHYSICIAN_TABLE_ATTR_START_HOUR = "start_hour",
+            PHYSICIAN_TABLE_ATTR_END_HOUR = "end_hour",
             PHYSICIAN_TABLE_CREATE =
                     "CREATE TABLE IF NOT EXISTS " + PHYSICIAN_TABLE_NAME + " (" +
                             "  " + PHYSICIAN_TABLE_KEY_ID + " INTEGER NOT NULL," +
@@ -101,6 +103,8 @@ public class QADatabaseStrings {
                             "  " + PHYSICIAN_TABLE_ATTR_PHONE + " CHAR(10)," +
                             "  " + PHYSICIAN_TABLE_ATTR_EMAIL + " VARCHAR(20)," +
                             "  " + PHYSICIAN_TABLE_ATTR_LOCATION + " VARCHAR(50)," +
+                            "  " + PHYSICIAN_TABLE_ATTR_START_HOUR + " INTEGER," +
+                            "  " + PHYSICIAN_TABLE_ATTR_END_HOUR + " INTEGER," +
                             "  PRIMARY KEY (" + PHYSICIAN_TABLE_KEY_ID + ")," +
                             "  FOREIGN KEY (" + PHYSICIAN_TABLE_KEY_ID + ") REFERENCES " + USER_TABLE_NAME + "(" + USER_TABLE_ATTR_USERNAME + ")" +
                             " ON DELETE CASCADE " +
