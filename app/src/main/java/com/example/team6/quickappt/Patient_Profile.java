@@ -13,6 +13,10 @@ public class Patient_Profile extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_patient__profile);
+
+        QADBHelper mDB = new QADBHelper(this);
+        mDB.open();
+
         Spinner spindown = (Spinner) findViewById(R.id.Months);
         ArrayList<String> Montharray= new ArrayList<String>(){{
             add("January");
