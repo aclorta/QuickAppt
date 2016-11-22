@@ -35,6 +35,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -165,10 +166,6 @@ public class LoginActivity extends AppCompatActivity {
             mEmailView.setError(getString(R.string.error_field_required));
             focusView = mEmailView;
             cancel = true;
-//        } else if (!isEmailValid(email)) { // Not checking for valid email address
-//            mEmailView.setError(getString(R.string.error_invalid_email));
-//            focusView = mEmailView;
-//            cancel = true;
         }
 
         // Check whether user exists and that their login information is correct
@@ -202,7 +199,8 @@ public class LoginActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext(), Physician_Profile.class);
                 intent.putExtra("userID", userID);
                 startActivity(intent);
-            }
+	    }
+	}
 
 
 
