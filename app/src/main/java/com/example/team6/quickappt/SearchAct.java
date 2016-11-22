@@ -31,6 +31,7 @@ public class SearchAct extends AppCompatActivity {
     EditText date, time, time2;
     private String u_ampm, u_ampm2;
     private int hour, minute, year, month, day, u_month, u_year, u_day, u_hour, u_minute, u_hour2, u_minute2;
+    private ArrayList<Physician> phys;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,12 +39,18 @@ public class SearchAct extends AppCompatActivity {
         setContentView(R.layout.activity_searchact);
         Spinner s = (Spinner) findViewById(R.id.spinner);
 
+//        CalendarSched cal = new CalendarSched();
+//        cal.initTime();
+//        cal.initCalendar();
+//
+        phys = new ArrayList<Physician>();
         if (specialist.isEmpty()) {
             initSpecialist(s);
         }
         date  = (EditText) findViewById(R.id.date);
         time  = (EditText) findViewById(R.id.time1);
         time2 = (EditText) findViewById(R.id.time2);
+
 
         time.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -81,7 +88,7 @@ public class SearchAct extends AppCompatActivity {
         DatePickerDialog tpd = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int day){
-               // System.out.println("date year: "+year);
+                // System.out.println("date year: "+year);
                 u_month=month+1;
                 u_day = day;
                 u_year = year;
@@ -99,7 +106,6 @@ public class SearchAct extends AppCompatActivity {
         final EditText txt = txtTime;
         TimePickerDialog tpd = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
             @Override
-
             public void onTimeSet(TimePicker view, int currHour, int minute){
 
                 SimpleDateFormat df = new SimpleDateFormat("HH:mm a");
@@ -148,7 +154,44 @@ public class SearchAct extends AppCompatActivity {
         },hour,minute,false);
         tpd.show();
     }
+
+    private myTime convertStringtoTime(String time){
+        String[] hour_min = time.split(" ");
+        int hour, min;
+        for(String s: hour_min){
+            System.out.println("String: "+s);
+        }
+        if(Integer.parseInt(hour_min[0]) < 12 && hour_min[3].equals("PM")){
+            hour = Integer.parseInt(hour_min[0])+12;
+
+        }
+        else{
+            hour = Integer.parseInt(hour_min[0]);
+        }
+        min = Integer.parseInt(hour_min[2]);
+        System.out.println("removing: "+hour+" min "+min);
+        return new myTime(hour,min);
+    }
     public void bookNow(View v){
+
+
+        TableLayout table = (TableLayout)findViewById(R.id.table);
+        table.removeView(selectedRow);
+
+//        TextView tv = (TextView) selectedRow.getChildAt(3);
+//        String name = tv.getText().toString();
+//        TextView tv2 = (TextView) selectedRow.getChildAt(2);
+//        String time = tv2.getText().toString();
+//
+//        System.out.println("name: "+name);
+//        for(Physician p : phys) {
+//            if (name.equals(p.getName())){
+//                System.out.println("MADE IT!");
+//                myTime myTime = convertStringtoTime(time);
+//                p.getAppointments().removeTime(myTime);
+//            }
+//        }
+
 //        Intent intent = new Intent(this, PatientCalendar.class);
 //        TextView tv = (TextView)selectedRow.getChildAt(2) ;
 //        String physician = tv.getText().toString();
@@ -185,17 +228,17 @@ public class SearchAct extends AppCompatActivity {
         }
     }
 
-    public TableRow createTableRow(String zip, String dist, String phys, String spec) {
+    public TableRow createTableRow(String zip, String dist, String phys, String spec, String time) {
         TableLayout table = (TableLayout) findViewById(R.id.table);
         View line = new View(this);
         line.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 1));
         line.setBackgroundColor(Color.rgb(51, 51, 51));
         table.addView(line);
-        return addTableRow(zip, dist, phys, spec);
+        return addTableRow(zip, dist, time, phys, spec);
 
     }
 
-    public TableRow addTableRow(String zip, String dist, String phys, String spec) {
+    public TableRow addTableRow(String zip, String dist, String time, String phys, String spec) {
         TableRow.LayoutParams param = new TableRow.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT);
         TableRow tr1 = new TableRow(this);
         tr1.setClickable(true);
@@ -204,35 +247,35 @@ public class SearchAct extends AppCompatActivity {
         TextView tv2 = new TextView(this);
         TextView tv3 = new TextView(this);
         TextView tv4 = new TextView(this);
+        TextView tv5 = new TextView(this);
         tv1.setText(zip);
         tv2.setText(dist);
-        tv3.setText(phys);
-        tv4.setText(spec);
+        tv3.setText(time);
+        tv4.setText(phys);
+        tv5.setText(spec);
         tr1.addView(tv1);
         tr1.addView(tv2);
         tr1.addView(tv3);
         tr1.addView(tv4);
+        tr1.addView(tv5);
         tr1.setLayoutParams(param);
         return tr1;
     }
 
     public void findSearch(View v) {
 
-        TableLayout table = (TableLayout) findViewById(R.id.table);
+        TableLayout table = (TableLayout)findViewById(R.id.table);
         table.removeViews(1, table.getChildCount() - 1);
         //ArrayList<ArrayList<String>> rows2 = new ArrayList<ArrayList<String>>();
-        ArrayList<Physician> phys = new ArrayList<Physician>();
+        //ArrayList<Physician> phys = new ArrayList<Physician>();
         HashMap<String, TableRow> rows = new HashMap<String, TableRow>();
         EditText zip = (EditText) findViewById(R.id.editText);
         String zipCode = zip.getText().toString();
 
+
         CalendarSched cal = new CalendarSched();
         cal.initCalendar();
         cal.initTime();
-
-        System.out.println("time: "+u_hour+": "+u_minute+" to "+u_hour2+": "+u_minute2 +" date: "+u_year+", "+u_month+" "+u_day );
-
-
         Physician p1 = new Physician("Dr. Lee", cal, "Cardiologist", "92617", "1 mi");
         Physician p2 = new Physician("Dr. Sayed", cal, "Gen. Physician", "92617", "1.5 mi");
         Physician p3 = new Physician("Dr. Strange", cal, "Optometrist", "92688", "2 mi");
@@ -247,23 +290,60 @@ public class SearchAct extends AppCompatActivity {
         String specialist = findSpecialist();
 
         for (Physician p : phys) {
-            for(myTime t : p.getAppointments().getTimes()) {
-                if (zipCode.equals(p.getzipCode())) {
-                    myTime t1 = new myTime(u_hour, u_minute);
-                    myTime t2 = new myTime(u_hour2, u_minute2);
-                    if (convertToMin(t1) <= convertToMin(t) && convertToMin(t)<= convertToMin(t2)) {
-                        //int min = convertToMin(t);
+            for(myDate c : p.getAppointments().getSched()) {
+                for (myTime t : p.getAppointments().getTimes()) {
+//                    if(u_year == c.getYear() && u_month == c.getMonth() && u_day == c.getDay()) {
+                    if (zipCode.equals(p.getzipCode())) {
+                        myTime t1 = new myTime(u_hour, u_minute);
+                        myTime t2 = new myTime(u_hour2, u_minute2);
+                        //System.out.println("orig_time: "+convertToMin(t)+" t1: "+convertToMin(t1)+" t2: "+convertToMin(t2));
+                        if (convertToMin(t1) <= convertToMin(t) && convertToMin(t) <= convertToMin(t2) || (t1.getHour() == 0 && t1.getMinute() == 0 && t2.getHour() == 0 && t2.getMinute() == 0 )) {
+                            //int min = convertToMin(t);
 
-                        if (( p.getSpecialty().equals(specialist)) || specialist.equals("Any")) {
-                            table.addView(createTableRow(p.getzipCode(), p.getdistance(), p.getName(), p.getSpecialty()));
+                            if ((p.getSpecialty().equals(specialist)) || specialist.equals("Any")) {
+                                String time = convertTime(t.getHour(), t.getMinute());
+                                //System.out.println("converted time: " + t.getHour() + " : " + t.getMinute() + " result in " + time);
+                                table.addView(createTableRow(p.getzipCode(), p.getdistance(), p.getName(), p.getSpecialty(), time));
+                            }
                         }
                     }
+//                    }
                 }
             }
         }
 
     }
 
+    public String convertTime(int hour, int min){
+        String m = "";
+        String am_pm = "AM";
+        Calendar cal = Calendar.getInstance();
+
+        if(min < 10 )
+        {
+            m="0"+Integer.toString(min);
+        }
+        else if(minute >= 10)
+        {
+            m = Integer.toString(min);
+        }
+        if(hour > 12) {
+            hour -= 12;
+            am_pm = "PM";
+        }
+        else if (hour == 12) {
+            hour = 12;
+            if(cal.get(Calendar.AM_PM) == Calendar.AM)
+            {
+                am_pm="AM";
+            }
+            else{
+                am_pm="PM";
+            }
+        }
+
+        return Integer.toString(hour)+" : "+m+" "+am_pm;
+    }
     public int convertToMin(myTime t){
         int time;
 
@@ -271,7 +351,7 @@ public class SearchAct extends AppCompatActivity {
             time = 12 * 60 + t.getMinute();
         else
             time = t.getHour() * 60 + t.getMinute();
-        System.out.println("begin: "+t.getHour()+": "+t.getMinute()+" to minutes: "+time);
+        //System.out.println("begin: "+t.getHour()+": "+t.getMinute()+" to minutes: "+time);
         return time;
     }
     public void initSpecialist(Spinner s) {
@@ -328,37 +408,67 @@ class myTime {
 
 }
 
+class myDate{
+    int y;
+    int m;
+    int d;
+
+    public myDate(int year, int month, int day){
+        y = year;
+        m = month;
+        d = day;
+    }
+
+    public int getYear(){
+        return y;
+    }
+
+    public int getMonth(){
+        return m;
+    }
+
+    public int getDay(){
+        return d;
+    }
+
+    public void setDay(int day){
+        d = day;
+    }
+
+    public void setMonth(int month){
+        m = month;
+    }
+
+    public void setYear(int year){
+        y = year;
+    }
+
+
+
+}
 class CalendarSched {
 
-    ArrayList<Calendar> sched;
+    ArrayList<myDate> sched;
     ArrayList<myTime> times;
-//    cal = Calendar.getInstance();
-//    cal.set(2016, 11, 22);
-//    cal2 = Calendar.getInstance();
-//    cal2.set(2016, 11, 23);
-//    cal3 = Calendar.getInstance();
-//    cal3.set(2016, 11, 24);
-//    cal4 = Calendar.getInstance();
-//    cal4.set(2016, 11, 25);
+
 
     public CalendarSched(){
-        sched = new ArrayList<Calendar>();
+        sched = new ArrayList<myDate>();
         times = new ArrayList<myTime>();
     }
 
-    public ArrayList<Calendar> initCalendar(){
+    public ArrayList<myDate> initCalendar(){
         for(int i=21; i<26 ; i++){
-            Calendar cal = Calendar.getInstance();
-            cal.set(2016,11,i+1);
-            sched.add(cal);
+            myDate date = new myDate(2016,11,i+1);
+            sched.add(date);
         }
         return sched;
     }
 
-    public ArrayList<Calendar> getSched(){
+    public ArrayList<myDate> getSched(){
         return sched;
     }
-    public void addSced(Calendar c){
+    public void addSced(myDate c){
         sched.add(c);
     }
 
@@ -375,8 +485,8 @@ class CalendarSched {
             myTime time = new myTime(i,0);
             times.add(time);
         }
-      //  myTime time = new myTime(12,0);
-       // times.add(time);
+        //  myTime time = new myTime(12,0);
+        // times.add(time);
         return times;
     }
 
