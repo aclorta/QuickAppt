@@ -2,19 +2,20 @@
     <string name="app_name">QuickAppt</string>
 
     <!-- Strings related to login -->
-    <string name="prompt_email">Username or Email</string>
+    <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
     <string name="action_sign_in">Sign in or register</string>
     <string name="action_sign_in_short">Sign in</string>
     <string name="error_invalid_email">This email address is invalid</string>
     <string name="error_invalid_password">This password is too short</string>
-    <string name="error_invalid_user">The user does not exist.</string>
-    <string name="error_invalid_login">The username/email and password combination do not match.</string>
+    <string name="error_invalid_user">This user does not exist</string>
+    <string name="error_invalid_login">The username/email and password combination do not match</string>
     <string name="error_incorrect_password">This password is incorrect</string>
     <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email completions."</string>
     <string name="list_medications_here">List Medications here</string>
     <string name="textview">TextView</string>
+    <string name="radioButton_patient">Patient</string>
+    <string name="radioButton_physician">Physician</string>
+
 </resources>

@@ -9,11 +9,15 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
+import android.location.Address;
 import android.util.Pair;
+import android.location.Geocoder;
+import android.location.Location;
 
+import java.io.IOException;
 import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.text.SimpleDateFormat;
@@ -21,18 +25,7 @@ import java.text.ParsePosition;
 
 public class QADBHelper
 {
-    public static final String KEY_ROWID = "_id",
-            KEY_ISBN = "isbn",
-            KEY_TITLE = "title",
-            KEY_PUBLISHER = "publisher",
-            TAG = "DBAdapter";
-
-
-    private static final String DATABASE_CREATE =
-            "create table titles (_id integer primary key autoincrement, "
-                    + "isbn text not null, title text not null, "
-                    + "publisher text not null);\n";
-
+    private static boolean initialized = false;
 
     private final Context context;
     private DatabaseHelper DBHelper;
@@ -40,7 +33,7 @@ public class QADBHelper
     private QADatabaseStrings dbStrings;
     private PasswordCrypter crypter;
     private SimpleDateFormat dateFormatter;
-    private GregorianCalendar calendar;
+    private Geocoder geocoder;
 
     public QADBHelper(Context ctx)
     {
@@ -49,7 +42,7 @@ public class QADBHelper
         DBHelper = new DatabaseHelper(context, dbStrings);
         crypter = new PasswordCrypter();
         dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        calendar = new GregorianCalendar();
+        geocoder = new Geocoder(this.context);
 
 
         /* TODO: delete this line if we plan on NOT using a fresh database on startup. */
@@ -82,10 +75,6 @@ public class QADBHelper
         public void onUpgrade(SQLiteDatabase db, int oldVersion,
                               int newVersion)
         {
-            Log.w(TAG, "Upgrading database from version " + oldVersion
-                    + " to "
-                    + newVersion + ", which will destroy all old data");
-            db.execSQL("DROP TABLE IF EXISTS titles");
             onCreate(db);
         }
     }
@@ -112,14 +101,25 @@ public class QADBHelper
 
     public class PatientAppointmentInfo
     {
-        public long physicianID;
-        public Date startDateTime;
-        public Date endDateTime;
+        private long physicianID;
+        private Date startDateTime;
+        private Date endDateTime;
 
         public PatientAppointmentInfo(long id, Date start, Date end) {
             physicianID = id;
             startDateTime = start;
             endDateTime = end;
+        }
+
+        // Getter methods
+        public long physicianID() {
+            return physicianID;
+        }
+        public Date startDateTime() {
+            return startDateTime;
+        }
+        public Date endDateTime() {
+            return endDateTime;
         }
 
         @Override
@@ -131,14 +131,25 @@ public class QADBHelper
     }
     public class PhysicianAppointmentInfo
     {
-        public long patientID;
-        public Date startDateTime;
-        public Date endDateTime;
+        private long patientID;
+        private Date startDateTime;
+        private Date endDateTime;
 
         public PhysicianAppointmentInfo(long id, Date start, Date end) {
             patientID = id;
             startDateTime = start;
             endDateTime = end;
+        }
+
+        // Getter methods
+        public long patientID() {
+            return patientID;
+        }
+        public Date startDateTime() {
+            return startDateTime;
+        }
+        public Date endDateTime() {
+            return endDateTime;
         }
 
         @Override
@@ -147,6 +158,11 @@ public class QADBHelper
                     ", StartDateTime: " + startDateTime +
                     ", EndDateTime: " + endDateTime + " }";
         }
+    }
+
+
+    private enum AppointmentQueryType {
+        ALL, PAST, UPCOMING
     }
 
     //---opens the database---
@@ -169,7 +185,10 @@ public class QADBHelper
         // Add null user into database
         addPatient(0,"","",getDate(0,0,0),"","","","","","","","","","","","","");
 
-        addTestData();
+        if (!initialized)
+            addTestData();
+
+        initialized = true;
         return this;
     }
 
@@ -450,7 +469,9 @@ public class QADBHelper
     This should be called after a physician has completed the sign up process.
      */
     public long addPhysician(long id, String name, String gender,
-                             String phone, String email, String location, String[] specializations)
+                             String phone, String email,
+                             String location, int startHour, int endHour,
+                             String[] specializations)
     {
         ContentValues initialValues = new ContentValues();
         initialValues.put(dbStrings.PHYSICIAN_TABLE_KEY_ID, id);
@@ -459,23 +480,30 @@ public class QADBHelper
         initialValues.put(dbStrings.PHYSICIAN_TABLE_ATTR_PHONE, phone);
         initialValues.put(dbStrings.PHYSICIAN_TABLE_ATTR_EMAIL, email);
         initialValues.put(dbStrings.PHYSICIAN_TABLE_ATTR_LOCATION, location);
+        initialValues.put(dbStrings.PHYSICIAN_TABLE_ATTR_START_HOUR, startHour);
+        initialValues.put(dbStrings.PHYSICIAN_TABLE_ATTR_END_HOUR, endHour);
 
         long result = db.insert(dbStrings.PHYSICIAN_TABLE_NAME, null, initialValues);
 
+        // Insert into specialization database
         for (String specialization : specializations) {
             addPhysicianSpecialization(id, specialization);
         }
 
-        // Insert into specialization database, return the User ID of physician
-        return result;
+        // return the User ID of physician
+        return id;
     }
 
     public long addPhysician(String username, String password,
                              String name, String gender,
-                             String phone, String email, String location, String[] specializations)
+                             String phone, String email,
+                             String location, int startHour, int endHour,
+                             String[] specializations)
     {
         return addPhysician(addUser(username, password),
-                                            name, gender, phone, email, location, specializations);
+                name, gender, phone, email,
+                location, startHour, endHour,
+                specializations);
     }
 
     /*
@@ -486,7 +514,10 @@ public class QADBHelper
         2: Gender,
         3: Phone,
         4: Email,
-        5: Location
+        5: Location,
+        6: Start Hour,
+        7: End Hour,
+        8: Specializations
     ]
 
     This should be called whenever you need to display specific patient information on a screen.
@@ -520,6 +551,8 @@ public class QADBHelper
             result.put("Phone", mCursor.getString(3));
             result.put("Email", mCursor.getString(4));
             result.put("Location", mCursor.getString(5));
+            result.put("StartHour", mCursor.getString(6));
+            result.put("EndHour", mCursor.getString(7));
             result.put("Specializations", getPhysicianSpecializations(id).toString());
 
             return result;
@@ -593,11 +626,17 @@ public class QADBHelper
 
     /*
     Returns a list of all the physicians with a given specialization.
+        - If using the location parameter with this, then the search is specified by the location,
+            using the range parameter (if specified) as a the max distance accepted.
     Each list is a map containing information for each physician, which was taken from the
         getPhysicianInfo(id) method.
-    Returns null if no physicians found.
+    Returns null if no physicians found or error occurred.
     */
-    public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization)
+    public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization,
+                                                                             String location,
+                                                                             float range,
+                                                                             Date startDateRange,
+                                                                             Date endDateRange)
     {
         String[] projection = {
                 dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID
@@ -606,6 +645,11 @@ public class QADBHelper
         String selection = dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION + " = ?";
         String[] selectionArgs = { specialization };
         ArrayList<HashMap<String,String>> result;
+
+        if (specialization.equalsIgnoreCase("any")) {
+            selection = null;
+            selectionArgs = null;
+        }
 
         Cursor mCursor =
                 db.query(
@@ -617,6 +661,161 @@ public class QADBHelper
                         null,
                         null
                 );
+        if (mCursor != null && mCursor.moveToFirst()) {
+            result = new ArrayList<HashMap<String,String>>();
+
+            HashMap<String,String> physicianInfo = getPhysicianInfo(mCursor.getLong(0));
+            float distanceToPhysician = getDistance(location, physicianInfo.get("Location"));
+
+            if (distanceToPhysician <= range && getTimeSlotsAvailableForPhysician( Long.parseLong(physicianInfo.get("ID")),
+                                                                                    startDateRange, endDateRange).size() > 0) {
+                result.add(physicianInfo);
+            }
+
+            while (mCursor.moveToNext()) {
+                physicianInfo = getPhysicianInfo(mCursor.getLong(0));
+                distanceToPhysician = getDistance(location, physicianInfo.get("Location"));
+
+                if (distanceToPhysician <= range && getTimeSlotsAvailableForPhysician( Long.parseLong(physicianInfo.get("ID")),
+                        startDateRange, endDateRange).size() > 0) {
+                    result.add(physicianInfo);
+                }
+            }
+            return result;
+        }
+        return null;
+    }
+    public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization,
+                                                                             Date startDateRange,
+                                                                             Date endDateRange)
+    {
+        String[] projection = {
+                dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID
+        };
+
+        String selection = dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION + " = ?";
+        String[] selectionArgs = { specialization };
+        ArrayList<HashMap<String,String>> result;
+
+        if (specialization.equalsIgnoreCase("any")) {
+            selection = null;
+            selectionArgs = null;
+        }
+
+        Cursor mCursor =
+                db.query(
+                        dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        null
+                );
+        if (mCursor != null && mCursor.moveToFirst()) {
+            result = new ArrayList<HashMap<String,String>>();
+
+            HashMap<String,String> physicianInfo = getPhysicianInfo(mCursor.getLong(0));
+
+            if (getTimeSlotsAvailableForPhysician( Long.parseLong(physicianInfo.get("ID")),
+                    startDateRange, endDateRange).size() > 0) {
+                result.add(physicianInfo);
+            }
+
+            while (mCursor.moveToNext()) {
+                physicianInfo = getPhysicianInfo(mCursor.getLong(0));
+
+                if (getTimeSlotsAvailableForPhysician( Long.parseLong(physicianInfo.get("ID")),
+                        startDateRange, endDateRange).size() > 0) {
+                    result.add(physicianInfo);
+                }
+            }
+            return result;
+        }
+        return null;
+    }
+    public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization,
+                                                                             String location,
+                                                                             float range)
+    {
+        String[] projection = {
+                dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID
+        };
+
+        String selection = dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION + " = ?";
+        String[] selectionArgs = { specialization };
+        ArrayList<HashMap<String,String>> result;
+
+        if (specialization.equalsIgnoreCase("any")) {
+            selection = null;
+            selectionArgs = null;
+        }
+
+        Cursor mCursor =
+                db.query(
+                        dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        null
+                );
+        if (mCursor != null && mCursor.moveToFirst()) {
+            result = new ArrayList<HashMap<String,String>>();
+
+            HashMap<String,String> physicianInfo = getPhysicianInfo(mCursor.getLong(0));
+            float distanceToPhysician = getDistance(location, physicianInfo.get("Location"));
+            System.out.println("Distance from " + location + " to " + physicianInfo.get("Location") + " = " + distanceToPhysician);
+
+            if (distanceToPhysician <= range) {
+                result.add(physicianInfo);
+            }
+
+            while (mCursor.moveToNext()) {
+                physicianInfo = getPhysicianInfo(mCursor.getLong(0));
+                distanceToPhysician = getDistance(location, physicianInfo.get("Location"));
+
+                if (distanceToPhysician <= range) {
+                    result.add(physicianInfo);
+                }
+            }
+            return result;
+        }
+        return null;
+    }
+    public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization,
+                                                                             String location)
+    {
+        return getPhysiciansWithSpecialization(specialization, location, 25);
+    }
+    public ArrayList<HashMap<String,String>> getPhysiciansWithSpecialization(String specialization)
+    {
+        String[] projection = {
+                dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID
+        };
+
+        String selection = dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION + " = ?";
+        String[] selectionArgs = { specialization };
+        ArrayList<HashMap<String,String>> result;
+
+        if (specialization.equalsIgnoreCase("any")) {
+            selection = null;
+            selectionArgs = null;
+        }
+
+        Cursor mCursor =
+                db.query(
+                        dbStrings.PHYSICIAN_SPECIALIZATIONS_TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        null
+                );
+
+
         if (mCursor != null && mCursor.moveToFirst()) {
             result = new ArrayList<HashMap<String,String>>();
 
@@ -646,7 +845,8 @@ public class QADBHelper
             return -1;
         if (endDate.before(startDate))                              // End date is before start Date
             return -1;
-
+        if (!timeSlotAvailableForPhysician(physicianID, startDate, endDate))  // time slot not available for physician
+            return -1;
 
         ContentValues initialValues = new ContentValues();
         initialValues.put(dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID, patientID);
@@ -681,7 +881,7 @@ public class QADBHelper
     }
 
     /*
-    Returns a sorted list of ALL appointments (from earliest to latest) for a patient given his/her ID.
+    Returns a sorted list of ALL, UPCOMING, OR PAST appointments (from earliest to latest) for a patient given his/her ID.
         Each appointment has:
             - Physician ID
             - Start date/time
@@ -691,21 +891,15 @@ public class QADBHelper
      */
     public ArrayList<PatientAppointmentInfo> getAllAppointmentsForPatient(long patientID)
     {
-        return getAppointmentsForPatient(patientID, false);
+        return getAppointmentsForPatient(patientID, AppointmentQueryType.ALL);
     }
-
-    /*
-    Returns a sorted list of UPCOMING appointments (from earliest to latest) for a patient given his/her ID.
-        Each appointment has:
-            - Physician ID
-            - Start date/time
-            - End date/time
-    Returns empty list if no appointments listed for a patient.
-    Returns null if ID did not belong to a patient.
-     */
     public ArrayList<PatientAppointmentInfo> getUpcomingAppointmentsForPatient(long patientID)
     {
-        return getAppointmentsForPatient(patientID, true);
+        return getAppointmentsForPatient(patientID, AppointmentQueryType.UPCOMING);
+    }
+    public ArrayList<PatientAppointmentInfo> getPastAppointmentsForPatient(long patientID)
+    {
+        return getAppointmentsForPatient(patientID, AppointmentQueryType.PAST);
     }
 
     /*
@@ -730,7 +924,7 @@ public class QADBHelper
     }
 
     /*
-    Returns a sorted list of ALL appointments (from earliest to latest) for a physician given his/her ID.
+    Returns a sorted list of ALL, UPCOMING, OR PAST appointments (from earliest to latest) for a physician given his/her ID.
         Each appointment has:
             - Patient ID
             - Start date/time
@@ -740,21 +934,15 @@ public class QADBHelper
      */
     public ArrayList<PhysicianAppointmentInfo> getAllAppointmentsForPhysician(long physicianID)
     {
-        return getAppointmentsForPhysician(physicianID, false);
+        return getAppointmentsForPhysician(physicianID, AppointmentQueryType.ALL);
     }
-
-    /*
-    Returns a sorted list of ALL appointments (from earliest to latest) for a physician given his/her ID.
-        Each appointment has:
-            - Patient ID
-            - Start date/time
-            - End date/time
-    Returns empty list if no appointments listed for a physician.
-    Returns null if ID did not belong to a physician.
-     */
     public ArrayList<PhysicianAppointmentInfo> getUpcomingAppointmentsForPhysician(long physicianID)
     {
-        return getAppointmentsForPhysician(physicianID, true);
+        return getAppointmentsForPhysician(physicianID, AppointmentQueryType.UPCOMING);
+    }
+    public ArrayList<PhysicianAppointmentInfo> getPastAppointmentsForPhysician(long physicianID)
+    {
+        return getAppointmentsForPhysician(physicianID, AppointmentQueryType.PAST);
     }
 
     /*
@@ -763,9 +951,21 @@ public class QADBHelper
      */
     public boolean timeSlotAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime)
     {
+        if (startDateTime.after(endDateTime))
+            return false;
+
         ArrayList<PhysicianAppointmentInfo> appointments = getUpcomingAppointmentsForPhysician(physicianID);
         long startTime = startDateTime.getTime(),
                 endTime = endDateTime.getTime();
+
+        HashMap<String,String> physicianInfo = getPhysicianInfo(physicianID);
+        int startAvailability = Integer.parseInt(physicianInfo.get("StartHour")),
+                endAvailability = Integer.parseInt(physicianInfo.get("EndHour")),
+                startAppointmentHour = getDateInfo(startDateTime, Calendar.HOUR_OF_DAY),
+                endAppointmentHour = getDateInfo(endDateTime, Calendar.HOUR_OF_DAY);
+
+        if (startAppointmentHour < startAvailability || endAppointmentHour > endAvailability)
+            return false;
 
         for (PhysicianAppointmentInfo appointment : appointments) {
             long otherApptStart = appointment.startDateTime.getTime(),
@@ -777,6 +977,77 @@ public class QADBHelper
         }
         return true;
     }
+    /*
+    Returns a list of pairs that contain (start-datetime, end-datetime) for open slots for appointments.
+    Returns null if start date time before end date time, or an error occurred.
+
+    The max length the list returns is 60, to avoid handling too much results.
+     */
+    public ArrayList<Pair<Date,Date>> getTimeSlotsAvailableForPhysician(long physicianID, Date startDateTime, Date endDateTime)
+    {
+        if (startDateTime.after(endDateTime))
+            return null;
+
+        ArrayList<Pair<Date,Date>> result = new ArrayList<Pair<Date,Date>>();
+
+        int     startYear = getDateInfo(startDateTime, Calendar.YEAR),
+                startMonth = getDateInfo(startDateTime, Calendar.MONTH) + 1,
+                startDay = getDateInfo(startDateTime, Calendar.DAY_OF_MONTH),
+                startHour = getDateInfo(startDateTime, Calendar.HOUR_OF_DAY),
+                startMinute = getDateInfo(startDateTime, Calendar.MINUTE),
+
+                endYear = getDateInfo(endDateTime, Calendar.YEAR),
+                endMonth = getDateInfo(endDateTime, Calendar.MONTH) + 1,
+                endDay = getDateInfo(endDateTime, Calendar.DAY_OF_MONTH),
+                endHour = getDateInfo(endDateTime, Calendar.HOUR_OF_DAY),
+                endMinute = getDateInfo(endDateTime, Calendar.MINUTE);
+
+        if (startMinute > 30) {
+            startDateTime = getDate(startYear, startMonth, startDay, startHour + 1, 0);
+
+        } else if (startMinute > 0 && startMinute < 30) {
+            startDateTime = getDate(startYear, startMonth, startDay, startHour, 30);
+        }
+
+        HashMap<String,String> physicianInfo = getPhysicianInfo(physicianID);
+        int startAvailabiltiyHour = Integer.parseInt(physicianInfo.get("StartHour")),
+                endAvailabilityHour = Integer.parseInt(physicianInfo.get("EndHour"));
+
+        int maxResultSize = 60;
+        while (startDateTime.before(endDateTime)) {
+            startYear = getDateInfo(startDateTime, Calendar.YEAR);
+            startMonth = getDateInfo(startDateTime, Calendar.MONTH) + 1;
+            startDay = getDateInfo(startDateTime, Calendar.DAY_OF_MONTH);
+            startHour = getDateInfo(startDateTime, Calendar.HOUR_OF_DAY);
+            startMinute = getDateInfo(startDateTime, Calendar.MINUTE);
+
+            Date newApptStart = startDateTime,
+                    newApptEnd = getDate(startYear, startMonth, startDay, startHour, startMinute + 30);
+
+            // If time slot reaches beyond physician's availability hours, continue to next day
+            if (newApptEnd.after(getDate(startYear, startMonth, startDay, endAvailabilityHour, 0))) {
+                startDateTime = getDate(startYear, startMonth, startDay+1, startAvailabiltiyHour, 0);
+                continue;
+
+            } else if (newApptStart.before(getDate(startYear, startMonth, startDay, startAvailabiltiyHour, 0))) {
+                startDateTime = getDate(startYear, startMonth, startDay, startAvailabiltiyHour, 0);
+                continue;
+            }
+
+
+            if (timeSlotAvailableForPhysician(physicianID, newApptStart, newApptEnd)) {
+                result.add(new Pair<Date,Date>(newApptStart, newApptEnd));
+                System.out.println("start = " + newApptStart + ", end = " + newApptEnd);
+                if (result.size() > maxResultSize)
+                    return result;
+            }
+
+            startDateTime = newApptEnd;
+        }
+
+        return result;
+    }
+
 
 
     /*---------- Class Helpers ----------*/
@@ -893,7 +1164,8 @@ public class QADBHelper
                         "M",                                                        // Gender
                         "4082345678",                                               // Phone
                         "morte@christian.com",                                      // Email
-                        "1234 One Road San Jose, CA 95131",                         // Location
+                        "Irvine, CA",                                               // Location
+                        8,18,                                                       // Hours: 8am - 6pm
                         new String[]{"Cardiologist", "Exercise Specialist"});       // Specializations
 
         // Add the physician Adam Lorta into database
@@ -903,7 +1175,8 @@ public class QADBHelper
                 "M",
                 "1230987654",
                 "adam@gmail.com",
-                "86743 Two Street San Francisco, CA 12345",
+                "San Francisco, CA",
+                7, 19,                                                  // Hours: 7am - 7pm
                 new String[]{"Cardiologist", "Physical Therapist"});
         addPhysician("Crystal456",
                 "Crystal456",
@@ -911,7 +1184,8 @@ public class QADBHelper
                 "F",
                 "1230987654",
                 "crystal@gmail.com",
-                "86743 Thhree Street Santa Clara, CA 12345",
+                "Merced, CA",
+                9, 17,                                          // Hours: 9am - 5pm
                 new String[]{"Cardiologist"});
 
 
@@ -932,8 +1206,8 @@ public class QADBHelper
                 2016, 5, 6, 16, 30);     // End Date Time: May 6, 2016, 4:30 PM
         addAppointment(2,               // Patient: Bob
                 3,                      // Physician: Christian
-                2016, 11, 28, 20, 30,      // Start Date Time: May 6, 2016 8:30 PM
-                2016, 11, 28, 21, 40);     // End Date Time: May 6, 2016, 9:40 PM
+                2016, 11, 28, 8, 30,      // Start Date Time: November 28, 2016 8:30 AM
+                2016, 11, 28, 9, 0);     // End Date Time: November 28, 2016, 9:00 AM
 
         /*
         THIS SHOULD NOT WORK - User ID 3 belongs to a physician, and physicians should not be able to book
@@ -953,6 +1227,42 @@ public class QADBHelper
     }
 
 
+    /*---------- Location Helpers ----------*/
+    public float getDistance(String location1, String location2)
+    {
+        if (location1 == null || location2 == null)
+            return -1;
+
+        Address address1 = getAddress(location1),
+                address2 = getAddress(location2);
+
+        if (address1 == null || address2 == null)
+            return -1;
+
+        float[] results = new float[] {0,0,0};
+        Location.distanceBetween(address1.getLatitude(),
+                                        address1.getLongitude(),
+                                        address2.getLatitude(),
+                                        address2.getLongitude(),
+                                        results);
+        // convert meters to miles
+        return (float) (results[0] * 0.000621371);
+    }
+    /*
+    Returns an address for a specific location, null if not available.
+     */
+    private Address getAddress(String location)
+    {
+        try {
+            List<Address> result = geocoder.getFromLocationName(location, 1);
+            if (result.size() == 0)
+                return null;
+            return result.get(0);
+        } catch (IOException e) {
+            System.out.println("Error: " + e);
+            return null;
+        }
+    }
 
     /*---------- Appointment/Date Helpers ----------*/
     /*
@@ -971,11 +1281,24 @@ public class QADBHelper
     }
 
     /*
+    Returns a year, month, day, hour, and/or minute given a Date object.
+    Parameter mode can be:
+        Calendar.YEAR,
+        Calendar.MONTH,
+        Calendar.DAY,
+     */
+    public int getDateInfo(Date date, int mode) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(date.getTime());
+        return cal.get(mode);
+    }
+
+    /*
     Returns a sorted list of ALL appointments (from earliest to latest) for a patient given his/her ID.
     Returns empty list if no appointments listed for a patient.
     Returns null if ID did not belong to a patient.
      */
-    public ArrayList<PatientAppointmentInfo> getAppointmentsForPatient(long patientID, boolean onlyShowUpcoming)
+    private ArrayList<PatientAppointmentInfo> getAppointmentsForPatient(long patientID, AppointmentQueryType type)
     {
         if (!isPatient(patientID))
             return null;
@@ -989,13 +1312,23 @@ public class QADBHelper
         String selection;
         String[] selectionArgs;
 
-        if (onlyShowUpcoming) {
+        if (type.equals(AppointmentQueryType.PAST)) {
+            selection = dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID + " = ? AND " +
+                    dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " < ? ";
+            selectionArgs = new String[]{ Long.toString(patientID), Long.toString(new Date().getTime()) };
+
+        }
+        else if (type.equals(AppointmentQueryType.UPCOMING)) {
             selection = dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID + " = ? AND " +
                             dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " > ? ";
             selectionArgs = new String[]{ Long.toString(patientID), Long.toString(new Date().getTime()) };
-        } else {
+
+        } else if (type.equals(AppointmentQueryType.ALL)) {
             selection = dbStrings.APPOINTMENT_TABLE_KEY_PATIENT_ID + " = ? ";
             selectionArgs = new String[]{ Long.toString(patientID) };
+
+        } else {
+            return null;
         }
 
         String orderBy = dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " ASC";
@@ -1034,7 +1367,7 @@ public class QADBHelper
     Returns empty list if no appointments listed for a physician.
     Returns null if ID did not belong to a physician.
      */
-    public ArrayList<PhysicianAppointmentInfo> getAppointmentsForPhysician(long physicianID, boolean onlyShowUpcoming)
+    private ArrayList<PhysicianAppointmentInfo> getAppointmentsForPhysician(long physicianID, AppointmentQueryType type)
     {
         if (!isPhysician(physicianID))
             return null;
@@ -1048,13 +1381,23 @@ public class QADBHelper
         String selection;
         String[] selectionArgs;
 
-        if (onlyShowUpcoming) {
+        if (type.equals(AppointmentQueryType.PAST)) {
+            selection = dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + " = ? AND " +
+                    dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " < ? ";
+            selectionArgs = new String[]{ Long.toString(physicianID), Long.toString(new Date().getTime()) };
+
+        }
+        else if (type.equals(AppointmentQueryType.UPCOMING)) {
             selection = dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + " = ? AND " +
                     dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " > ? ";
             selectionArgs = new String[]{ Long.toString(physicianID), Long.toString(new Date().getTime()) };
-        } else {
+
+        } else if (type.equals(AppointmentQueryType.ALL)) {
             selection = dbStrings.APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + " = ? ";
             selectionArgs = new String[]{ Long.toString(physicianID) };
+
+        } else {
+            return null;
         }
 
         String orderBy = dbStrings.APPOINTMENT_TABLE_KEY_START_TIME + " ASC";
