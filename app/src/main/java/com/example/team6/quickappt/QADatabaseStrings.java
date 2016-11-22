@@ -10,7 +10,6 @@ public class QADatabaseStrings {
     public final String USER_TABLE_NAME = "UserLogin",
             USER_TABLE_KEY_ROWID = "_id",
             USER_TABLE_ATTR_USERNAME = "username",
-            USER_TABLE_ATTR_PASSWORD = "username",
             USER_TABLE_CREATE =
                     "CREATE TABLE IF NOT EXISTS " + USER_TABLE_NAME +  " (" +
                             "  " + USER_TABLE_KEY_ROWID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -122,12 +121,12 @@ public class QADatabaseStrings {
     // Create SQL command for creating the 'PhysicianSpecialization' table
     public final String PHYSICIAN_SPECIALIZATIONS_TABLE_NAME = "PhysicianSpecializations",
             PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID = "physician_id",
-            PHYSICIAN_SPECIALIZATIONS_TABLE_ATTR_SPECIALIZATION = "specialization",
+            PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION = "specialization",
             PHYSICIAN_SPECIALIZATIONS_TABLE_CREATE =
                     "CREATE TABLE IF NOT EXISTS " + PHYSICIAN_SPECIALIZATIONS_TABLE_NAME + " (" +
                             "  " + PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID + " INTEGER NOT NULL," +
-                            "  " + PHYSICIAN_SPECIALIZATIONS_TABLE_ATTR_SPECIALIZATION + " VARCHAR(50)," +
-                            "  PRIMARY KEY (" + PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID +  ")," +
+                            "  " + PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION + " VARCHAR(50) NOT NULL," +
+                            "  PRIMARY KEY (" + PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID + ", " +  PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_SPECIALIZATION + ")," +
                             "  FOREIGN KEY (" + PHYSICIAN_SPECIALIZATIONS_TABLE_KEY_ID + ") REFERENCES " + USER_TABLE_NAME + "(" + USER_TABLE_ATTR_USERNAME + ")" +
                             " ON DELETE CASCADE " +
                             " ON UPDATE CASCADE " +
@@ -137,13 +136,15 @@ public class QADatabaseStrings {
     public final String APPOINTMENT_TABLE_NAME = "Appointment",
             APPOINTMENT_TABLE_KEY_PATIENT_ID = "patient_id",
             APPOINTMENT_TABLE_KEY_PHYSICIAN_ID = "physician_id",
-            APPOINTMENT_TABLE_ATTR_TIME = "time",
+            APPOINTMENT_TABLE_KEY_START_TIME = "start_time",
+            APPOINTMENT_TABLE_ATTR_END_TIME = "end_time",
             APPOINTMENT_TABLE_CREATE =
                     "CREATE TABLE IF NOT EXISTS " + APPOINTMENT_TABLE_NAME + " (" +
                             "  " + APPOINTMENT_TABLE_KEY_PATIENT_ID + " INTEGER NOT NULL," +
                             "  " + APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + " INTEGER NOT NULL," +
-                            "  " + APPOINTMENT_TABLE_ATTR_TIME + " DATETIME NOT NULL," +
-                            "  PRIMARY KEY (" + APPOINTMENT_TABLE_KEY_PATIENT_ID + ", " + APPOINTMENT_TABLE_KEY_PHYSICIAN_ID +  ")," +
+                            "  " + APPOINTMENT_TABLE_KEY_START_TIME + " DATETIME NOT NULL," +
+                            "  " + APPOINTMENT_TABLE_ATTR_END_TIME + " DATETIME NOT NULL," +
+                            "  PRIMARY KEY (" + APPOINTMENT_TABLE_KEY_PATIENT_ID + ", " + APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + ", " + APPOINTMENT_TABLE_KEY_START_TIME +  ")," +
                             "  FOREIGN KEY (" + APPOINTMENT_TABLE_KEY_PATIENT_ID + ") REFERENCES " + PATIENT_TABLE_NAME + "(" + PATIENT_TABLE_KEY_ID + ")" +
                             "  ON DELETE CASCADE " +
                             "  ON UPDATE CASCADE, " +
