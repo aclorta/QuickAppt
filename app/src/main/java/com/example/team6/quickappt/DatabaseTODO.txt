@@ -21,6 +21,9 @@ Implemented
 
 To implement
 -------------
+- Given a time slot, find list of available appointments
+    - From range 8AM to 6PM
+
 - IMPORTANT: CHECK METHOD FOR APPOINTMENTS IF CERTAIN TIME INTERFERES WITH APPT FOR PHYSICIANS.
 - Add new DB hooks onto different activities into app
     - Select the nearest physicians based on ZIP-CODE and SYMPTOMS/SPECIALIZATIONS
