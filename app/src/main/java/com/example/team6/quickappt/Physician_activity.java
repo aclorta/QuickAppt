@@ -54,5 +54,19 @@ public class Physician_activity extends AppCompatActivity {
         };
         ArrayAdapter<String> adaptime = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,timeArray);
         spins.setAdapter(adaptime);
+        Spinner clicker = (Spinner) findViewById(R.id.AM);
+        ArrayList<String> amOr = new ArrayList<String>(){{
+            add("AM");
+            add("PM");
+        }};
+        ArrayAdapter<String> adaptam = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item,amOr);
+        clicker.setAdapter(adaptam);
+        Spinner second = (Spinner) findViewById(R.id.PM);
+        ArrayList<String> pmOr = new ArrayList<String>(){{
+            add("AM");
+            add("PM");
+        }};
+        ArrayAdapter<String> adaptpm = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item,pmOr);
+        second.setAdapter(adaptpm);
     }
 }
