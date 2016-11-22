@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -28,6 +29,8 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -57,8 +60,13 @@ public class LoginActivity extends AppCompatActivity {
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private View mRadioGroupView;
 
     private QADBHelper mDB;
+
+    private boolean isPatient = true;
+    private boolean isPatientRadio = true;
+    private boolean isRadioClicked = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +75,7 @@ public class LoginActivity extends AppCompatActivity {
         // Set up the login form.
         mEmailView = (EditText) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
+        mRadioGroupView = (RadioGroup) findViewById(R.id.radioButtonGroup);
 
         // Triggers when user hits 'Enter'
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -96,6 +105,29 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
+    public void onRadioButtonClicked(View view) {
+        boolean checked = ((RadioButton) view).isChecked();
+
+        switch(view.getId()) {
+            case R.id.radioButton_patient:
+                if (checked) {
+                    // Patient
+//                    System.out.println("I'm a patient");
+                    isPatientRadio = true;
+                    isRadioClicked = true;
+                }
+                break;
+            case R.id.radioButton_physician:
+                if (checked) {
+                    // Physician
+//                    System.out.println("I'm a physician");
+                    isPatientRadio = false;
+                    isRadioClicked = true;
+                }
+                break;
+        }
+    }
+
     /**
      * Attempts to sign in or register the account specified by the login form.
      * If there are form errors (invalid email, missing fields, etc.), the
@@ -105,8 +137,6 @@ public class LoginActivity extends AppCompatActivity {
         if (mAuthTask != null) {
             return;
         }
-
-        /* Our only two users in the database are: {hello, world} and {foobar, barfoo} */
 
         // Reset errors.
         mEmailView.setError(null);
@@ -124,8 +154,7 @@ public class LoginActivity extends AppCompatActivity {
             mPasswordView.setError(getString(R.string.error_field_required));
             focusView = mPasswordView;
             cancel = true;
-        }
-        else if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+        } else if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
             cancel = true;
@@ -136,14 +165,18 @@ public class LoginActivity extends AppCompatActivity {
             mEmailView.setError(getString(R.string.error_field_required));
             focusView = mEmailView;
             cancel = true;
-        } else if (!isUsernameValid(email)) {
-            mEmailView.setError(getString(R.string.error_invalid_email));
-            focusView = mEmailView;
-            cancel = true;
-        } else if (!mDB.userExists(email)) {
-            mEmailView.setError(getString(R.string.error_invalid_user));
-            focusView = mEmailView;
-            cancel = true;
+//        } else if (!isEmailValid(email)) { // Not checking for valid email address
+//            mEmailView.setError(getString(R.string.error_invalid_email));
+//            focusView = mEmailView;
+//            cancel = true;
+        }
+
+        // Check whether user exists and that their login information is correct
+        // If user does not exist, send them to profile page in order to create
+        // new account
+        if (!mDB.userExists(email) && !cancel) {
+            createUser(email, password);
+            return;
         } else if (!mDB.loginValid(email, password)) {
             mEmailView.setError(getString(R.string.error_invalid_login));
             focusView = mEmailView;
@@ -155,26 +188,46 @@ public class LoginActivity extends AppCompatActivity {
             // form field with an error.
             focusView.requestFocus();
         } else {
+
+            // Determine where to send user, then send them there with relevant information
+            long userID = mDB.getUserID(email);
+
+            if (mDB.isPatient(userID)) {
+                isPatient = true;
+                Intent intent = new Intent(getApplicationContext(), HomeScreen.class);
+                intent.putExtra("userID", userID);
+                startActivity(intent);
+            } else {
+                isPatient = false;
+                Intent intent = new Intent(getApplicationContext(), Physician_Profile.class);
+                intent.putExtra("userID", userID);
+                startActivity(intent);
+            }
+
+
+
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
 //            showProgress(true);
 //            mAuthTask = new UserLoginTask(email, password);
-
-            long userID = mDB.getUserID(email);
-            System.out.println("Successfully logged in! User ID = " + userID);
-            if (mDB.isPatient(userID)) {
-                System.out.println("Info for patient = " + mDB.getPatientInfo(userID));
-            }
-            else if (mDB.isPhysician(userID)) {
-                System.out.println("Info for physician = " + mDB.getPhysicianInfo(userID));
-            }
-            else {
-                System.out.println("Could not get info for user");
-            }
-
-            mAuthTask.execute((Void) null);
-            mDB.close();
+//            mAuthTask.execute((Void) null);
+//            mDB.close();
         }
+    }
+
+    private void createUser(String email, String password) {
+        if (isPatientRadio) {
+            Intent intent = new Intent(getApplicationContext(), Patient_profile.class);
+            intent.putExtra("email", email);
+            intent.putExtra("password", password);
+            startActivity(intent);
+        } else {
+            Intent intent = new Intent(getApplicationContext(), Physician_activity.class);
+            intent.putExtra("email", email);
+            intent.putExtra("password", password);
+            startActivity(intent);
+        }
+
     }
 
     private boolean isEmailValid(String email) {

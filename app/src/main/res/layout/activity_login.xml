@@ -61,6 +61,25 @@
 
             </android.support.design.widget.TextInputLayout>
 
+            <RadioGroup
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/radioButtonGroup">
+                <RadioButton
+                    android:text="@string/radioButton_patient"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/radioButton_patient"
+                    android:onClick="onRadioButtonClicked"/>
+
+                <RadioButton
+                    android:text="@string/radioButton_physician"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/radioButton_physician"
+                    android:onClick="onRadioButtonClicked"/>
+            </RadioGroup>
+
             <Button
                 android:id="@+id/email_sign_in_button"
                 style="?android:textAppearanceSmall"
@@ -72,4 +91,5 @@
 
         </LinearLayout>
     </ScrollView>
+
 </LinearLayout>
