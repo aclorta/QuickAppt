@@ -13,6 +13,10 @@ public class Physician_activity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_physician_activity);
+
+        QADBHelper mDB = new QADBHelper(this);
+        mDB.open();
+
         Spinner spindown = (Spinner) findViewById(R.id.Checkin);
         ArrayList<String> TimeArray= new ArrayList<String>(){{
             add("12");
