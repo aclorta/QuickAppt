@@ -165,7 +165,7 @@ public class LoginActivity extends AppCompatActivity {
             if (mDB.isPatient(userID)) {
                 isPatient = true;
                 Intent intent = new Intent(getApplicationContext(), HomeScreen.class);
-                intent.putExtra("userID", userID);
+                intent.putExtra("patientID", userID);
                 startActivity(intent);
             } else {
                 isPatient = false;

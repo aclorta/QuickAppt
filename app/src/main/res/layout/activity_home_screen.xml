@@ -11,78 +11,26 @@
     tools:context="com.example.team6.quickappt.HomeScreen">
 
     <TextView
-        android:text="Name"
+        android:text="Home"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/name_lbl"
+        android:id="@+id/home_lbl"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
-        android:layout_marginTop="23dp" />
-
-    <TextView
-        android:text="Name Here"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/name_input"
-        android:layout_below="@+id/name_lbl"
-        android:layout_alignParentStart="true" />
-
-    <TextView
-        android:text="Location Here"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/locate_lbl"
-        android:id="@+id/locate_input"
-        android:layout_alignStart="@+id/locate_lbl" />
-
-    <TextView
-        android:text="Reminder"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/name_input"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="44dp"
-        android:id="@+id/reminder_lbl" />
+        android:layout_toStartOf="@+id/logout_btn"
+        android:layout_alignParentEnd="true"
+        android:textAppearance="@android:style/TextAppearance.Theme.Dialog"
+        android:textAlignment="center"
+        android:textSize="30sp" />
 
     <Button
         android:text="History"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/checkin_btn"
-        android:layout_alignEnd="@+id/checkin_btn"
-        android:id="@+id/history_btn" />
-
-    <ListView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/reminder_lbl"
+        android:id="@+id/history_btn"
         android:layout_alignParentStart="true"
-        android:id="@+id/reminder_lst"
-        android:layout_above="@+id/search_btn" />
-
-    <TextView
-        android:text="Home"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:id="@+id/home_lbl" />
-
-    <Button
-        android:text="Log Out"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/logout_btn"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="18dp"
-        android:layout_alignTop="@id/home_lbl" />
-
-    <TextView
-        android:text="Location"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/locate_lbl"
-        android:layout_below="@+id/name_input"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentBottom="true"
+        android:layout_toStartOf="@+id/edit_btn" />
 
     <Button
         android:text="Search"
@@ -90,23 +38,87 @@
         android:id="@+id/search_btn"
         android:layout_width="wrap_content"
         android:elevation="3dp"
-        android:layout_above="@+id/edit_btn"
-        android:layout_alignEnd="@+id/logout_btn"
-        android:layout_marginEnd="69dp" />
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@+id/edit_btn"
+        android:layout_above="@+id/history_btn" />
 
     <Button
         android:text="Edit Profile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/edit_btn"
-        android:layout_alignParentBottom="true"
-        android:layout_alignStart="@+id/search_btn" />
+        android:layout_below="@+id/reminder_lst"
+        android:layout_alignParentEnd="true"
+        android:autoText="true" />
 
     <Button
-        android:text="Check In"
+        android:text="Log Out"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/checkin_btn"
-        android:layout_below="@+id/reminder_lst"
-        android:layout_toEndOf="@+id/name_lbl" />
+        android:id="@+id/logout_btn"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignStart="@+id/edit_btn" />
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/reminder_lst"
+        android:layout_alignParentStart="true"
+        android:layout_above="@+id/search_btn"
+        android:layout_below="@+id/reminder_lbl"
+        android:footerDividersEnabled="false"
+        android:headerDividersEnabled="true" />
+
+    <TextView
+        android:text="Name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/name_input"
+        android:textAppearance="@android:style/TextAppearance.Large"
+        android:textAlignment="viewStart"
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@+id/edit_btn"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/home_lbl"
+        android:autoText="true"
+        android:fontFamily="serif" />
+
+    <TextView
+        android:text="Reminders"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/reminder_lbl"
+        android:textAppearance="@android:style/TextAppearance.Material.Menu"
+        android:textAlignment="textStart"
+        android:textSize="18sp"
+        android:layout_below="@+id/name_input"
+        android:layout_alignParentStart="true"
+        android:background="@android:color/darker_gray"
+        android:layout_marginTop="25dp"
+        android:layout_alignParentEnd="true"
+        android:fontFamily="serif" />
+
+    <TextView
+        android:text="Location:"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/locationStaticLabel"
+        android:layout_alignBaseline="@+id/locate_lbl"
+        android:layout_alignBottom="@+id/locate_lbl"
+        android:layout_alignParentStart="true"
+        android:textAlignment="textStart"
+        android:fontFamily="serif" />
+
+    <TextView
+        android:text="Location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/locate_lbl"
+        android:layout_below="@+id/name_input"
+        android:layout_alignParentEnd="true"
+        android:layout_toEndOf="@+id/locationStaticLabel"
+        android:textAlignment="center"
+        android:fontFamily="serif" />
+
 </RelativeLayout>

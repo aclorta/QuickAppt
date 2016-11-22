@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.location.Address;
@@ -182,13 +183,14 @@ public class QADBHelper
         db.execSQL(dbStrings.APPOINTMENT_TABLE_CREATE);
         db.execSQL(dbStrings.PATIENT_MEDICAL_HISTORY_TABLE_CREATE);
 
-        if (!initialized)
-            addTestData();
-        // Add null user into database
-        addPatient(0,"","",getDate(0,0,0),"","","","","","","","","","","","","");
+        System.out.println("Initialized = " + initialized);
 
-        if (!initialized)
+        if (!initialized) {
             addTestData();
+
+            // Add null user into database
+            addPatient(0,"","",getDate(0,0,0),"","","","","","","","","","","","","");
+        }
 
         initialized = true;
         return this;
@@ -1115,101 +1117,114 @@ public class QADBHelper
         /*
         ADDING PATIENTS TO THE TABLE
          */
-        addPatient("Alice123",                              // Username
-                "Alice123",                                 // Password
-                "Alice Wonderland",                         // Name
-                "F",                                        // Gender (Female)
-                getDate(1990, 1, 2),                        // Birth Date
-                "Married",                                  // Marital status
-                "1234567890",                               // Phone-number
-                "alice@wonderland.com",                     // Email
-                "1234 Example Street Irvine, CA 92617",     // Location
-                "Software Engineer",                        // Occupation
-                "Y",                                        // Tobacco Smoker ?
-                "N",                                        // Regular Exerciser?
-                "Ibuprofen, dust",                          // Allergies
-                "N/A",                                      // Medications
-                "Right ankle surgery",                      // Surgeries
-                "Winnie Pooh",                              // Physician Name
-                "Spongebob Squarepants",                    // Dentist Name
-                "Patrick Star"                              // Eye Doctor Name
-        );
-        // Add the patient Bob Builder, with Username "Bob456" and Password "Bob456"
-        addPatient("Bob456",
-                "Bob456",
-                "Bob Builder",
-                "M",
-                getDate(1954, 2, 24),
-                "Single",
-                "9285749483",
-                "bob@builder.com",
-                "789 Anteater Drive Irvine, CA 92617",
-                "Construction Worker",
-                "N",
-                "Y",
-                "N/A",
-                "Viagra",
-                "Left rotator cuff surgery",
-                "Thomas Train",
-                "Kuroko Tetsuya",
-                "Kagami Taiga"
-        );
+        try {
+            addPatient("Alice123",                              // Username
+                    "Alice123",                                 // Password
+                    "Alice Wonderland",                         // Name
+                    "F",                                        // Gender (Female)
+                    getDate(1990, 1, 2),                        // Birth Date
+                    "Married",                                  // Marital status
+                    "1234567890",                               // Phone-number
+                    "alice@wonderland.com",                     // Email
+                    "1234 Example Street Irvine, CA 92617",     // Location
+                    "Software Engineer",                        // Occupation
+                    "Y",                                        // Tobacco Smoker ?
+                    "N",                                        // Regular Exerciser?
+                    "Ibuprofen, dust",                          // Allergies
+                    "N/A",                                      // Medications
+                    "Right ankle surgery",                      // Surgeries
+                    "Winnie Pooh",                              // Physician Name
+                    "Spongebob Squarepants",                    // Dentist Name
+                    "Patrick Star"                              // Eye Doctor Name
+            );
+            // Add the patient Bob Builder, with Username "Bob456" and Password "Bob456"
+            addPatient("Bob456",
+                    "Bob456",
+                    "Bob Builder",
+                    "M",
+                    getDate(1954, 2, 24),
+                    "Single",
+                    "9285749483",
+                    "bob@builder.com",
+                    "789 Anteater Drive Irvine, CA 92617",
+                    "Construction Worker",
+                    "N",
+                    "Y",
+                    "N/A",
+                    "Viagra",
+                    "Left rotator cuff surgery",
+                    "Thomas Train",
+                    "Kuroko Tetsuya",
+                    "Kagami Taiga"
+            );
 
 
         /*
         ADDING PHYSICIANS TO THE TABLE
          */
-        // Add the physician Christian Morte into database
-        addPhysician("Christian123",                                                // Username
-                        "Christian123",                                             // Password
-                        "Christian Morte",                                          // Name
-                        "M",                                                        // Gender
-                        "4082345678",                                               // Phone
-                        "morte@christian.com",                                      // Email
-                        "Irvine, CA",                                               // Location
-                        8,18,                                                       // Hours: 8am - 6pm
-                        new String[]{"Cardiologist", "Exercise Specialist"});       // Specializations
+            // Add the physician Christian Morte into database
+            addPhysician("Christian123",                                                // Username
+                    "Christian123",                                             // Password
+                    "Christian Morte",                                          // Name
+                    "M",                                                        // Gender
+                    "4082345678",                                               // Phone
+                    "morte@christian.com",                                      // Email
+                    "Irvine, CA",                                               // Location
+                    8,18,                                                       // Hours: 8am - 6pm
+                    new String[]{"Cardiologist", "Exercise Specialist"});       // Specializations
 
-        // Add the physician Adam Lorta into database
-        addPhysician("Adam123",
+            // Add the physician Adam Lorta into database
+            addPhysician("Adam123",
                     "Adam123",
-                "Adam Lorta",
-                "M",
-                "1230987654",
-                "adam@gmail.com",
-                "San Francisco, CA",
-                7, 19,                                                  // Hours: 7am - 7pm
-                new String[]{"Cardiologist", "Physical Therapist"});
-        addPhysician("Crystal456",
-                "Crystal456",
-                "Crystal Yee",
-                "F",
-                "1230987654",
-                "crystal@gmail.com",
-                "Merced, CA",
-                9, 17,                                          // Hours: 9am - 5pm
-                new String[]{"Cardiologist"});
+                    "Adam Lorta",
+                    "M",
+                    "1230987654",
+                    "adam@gmail.com",
+                    "San Francisco, CA",
+                    7, 19,                                                  // Hours: 7am - 7pm
+                    new String[]{"Cardiologist", "Physical Therapist"});
+            addPhysician("Crystal456",
+                    "Crystal456",
+                    "Crystal Yee",
+                    "F",
+                    "1230987654",
+                    "crystal@gmail.com",
+                    "Merced, CA",
+                    9, 17,                                          // Hours: 9am - 5pm
+                    new String[]{"Cardiologist"});
 
 
         /*
         CREATING APPOINTMENTS FOR PATIENTS/PHYSICIANS, ADDING INTO TABLE
          */
-        addAppointment(1,               // Patient: Alice
-                3,                      // Physician: Christian
-                2016, 5, 4, 12, 30,      // Start Date Time: May 4, 2016 12:30 PM
-                2016, 5, 4, 1, 30);     // End Date Time: May 4, 2016, 1:30 PM
-        addAppointment(1,               // Patient: Alice
-                4,                      // Physician: Adam
-                2016, 5, 6, 15, 30,      // Start Date Time: May 6, 2016 3:30 PM
-                2016, 5, 6, 16, 30);     // End Date Time: May 6, 2016, 4:30 PM
-        addAppointment(2,               // Patient: Bob
-                4,                      // Physician: Adam
-                2016, 5, 6, 15, 30,      // Start Date Time: May 6, 2016 3:30 PM
-                2016, 5, 6, 16, 30);     // End Date Time: May 6, 2016, 4:30 PM
-        addAppointment(2,               // Patient: Bob
-                3,                      // Physician: Christian
-                2016, 11, 28, 8, 30,      // Start Date Time: November 28, 2016 8:30 AM
-                2016, 11, 28, 9, 0);     // End Date Time: November 28, 2016, 9:00 AM
+            addAppointment(1,               // Patient: Alice
+                    3,                      // Physician: Christian
+                    2016, 5, 4, 12, 30,      // Start Date Time: May 4, 2016 12:30 PM
+                    2016, 5, 4, 1, 30);     // End Date Time: May 4, 2016, 1:30 PM
+            addAppointment(1,               // Patient: Alice
+                    3,                      // Physician: Christian
+                    2017, 5, 4, 12, 30,      // Start Date Time: May 4, 2017 12:30 PM
+                    2017, 5, 4, 1, 30);     // End Date Time: May 4, 2017, 1:30 PM
+            addAppointment(1,               // Patient: Alice
+                    4,                      // Physician: Adam
+                    2016, 12, 4, 12, 30,      // Start Date Time: December 4, 2016 12:30 PM
+                    2016, 12, 4, 1, 30);     // End Date Time: December 4, 2016, 1:30 PM
+            addAppointment(1,               // Patient: Alice
+                    4,                      // Physician: Adam
+                    2016, 5, 6, 15, 30,      // Start Date Time: May 6, 2016 3:30 PM
+                    2016, 5, 6, 16, 30);     // End Date Time: May 6, 2016, 4:30 PM
+            addAppointment(2,               // Patient: Bob
+                    4,                      // Physician: Adam
+                    2016, 5, 6, 15, 30,      // Start Date Time: May 6, 2016 3:30 PM
+                    2016, 5, 6, 16, 30);     // End Date Time: May 6, 2016, 4:30 PM
+            addAppointment(2,               // Patient: Bob
+                    4,                      // Physician: Adam
+                    2016, 2, 26, 9, 30,      // Start Date Time: November 28, 2016 8:30 AM
+                    2016, 2, 26, 10, 0);     // End Date Time: November 28, 2016, 9:00 AM
+            addAppointment(2,               // Patient: Bob
+                    3,                      // Physician: Christian
+                    2016, 11, 28, 8, 30,      // Start Date Time: November 28, 2016 8:30 AM
+                    2016, 11, 28, 9, 0);     // End Date Time: November 28, 2016, 9:00 AM
 
         /*
         THIS SHOULD NOT WORK - User ID 3 belongs to a physician, and physicians should not be able to book
@@ -1217,19 +1232,22 @@ public class QADBHelper
 
         This returns -1, which means the appointment was not able to be added.
         */
-        addAppointment(3,               // Patient: Christian (SHOULD NOT WORK)
-                4,                      // Physician: Adam
-                2016, 5, 4, 12, 30,     // Start Date Time: May 4, 2016 12:30 PM
-                2016, 5, 4, 1, 30);     // End Date Time: May 4, 2016, 1:30 PM
+            addAppointment(3,               // Patient: Christian (SHOULD NOT WORK)
+                    4,                      // Physician: Adam
+                    2016, 5, 4, 12, 30,     // Start Date Time: May 4, 2016 12:30 PM
+                    2016, 5, 4, 1, 30);     // End Date Time: May 4, 2016, 1:30 PM
 
-        addAppointment(0,
-                3,
-                2016, 11, 28, 22, 30,
-                2016, 11, 28, 24, 40);
+            addAppointment(0,
+                    3,
+                    2016, 11, 28, 22, 30,
+                    2016, 11, 28, 24, 40);
+        } catch (SQLiteConstraintException e) {
+            System.out.println("Error inserting test data into database (ignoring): " + e);
+        } catch (Exception e) {
+            System.out.println("Error inserting test data into database (ignoring): " + e);
+        }
+
     }
-<<<<<<< HEAD
-// Test comment for commit purposes
-=======
 
 
     /*---------- Location Helpers ----------*/
@@ -1434,7 +1452,6 @@ public class QADBHelper
         }
         return result;
     }
->>>>>>> c8c49fbcee65074e7f51c5309d6a4e80ba1177d6
 }
 
 

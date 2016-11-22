@@ -147,18 +147,17 @@ public class QADatabaseStrings {
                             "  " + APPOINTMENT_TABLE_KEY_PATIENT_ID + " INTEGER NOT NULL," +
                             "  " + APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + " INTEGER NOT NULL," +
                             "  " + APPOINTMENT_TABLE_KEY_START_TIME + " DATETIME NOT NULL," +
-                            "  " + APPOINTMENT_TABLE_ATTR_END_TIME + " DATETIME NOT NULL," +
+                            "  " + APPOINTMENT_TABLE_ATTR_END_TIME + " DATETIME," +
                             "  PRIMARY KEY (" + APPOINTMENT_TABLE_KEY_PATIENT_ID + ", " + APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + ", " + APPOINTMENT_TABLE_KEY_START_TIME +  ")," +
                             "  FOREIGN KEY (" + APPOINTMENT_TABLE_KEY_PATIENT_ID + ") REFERENCES " + PATIENT_TABLE_NAME + "(" + PATIENT_TABLE_KEY_ID + ")" +
                             "  ON DELETE CASCADE " +
                             "  ON UPDATE CASCADE, " +
                             "  FOREIGN KEY (" + APPOINTMENT_TABLE_KEY_PHYSICIAN_ID + ") REFERENCES " + PHYSICIAN_TABLE_NAME + "(" + PHYSICIAN_TABLE_KEY_ID + ")" +
-                            "  ON DELETE SET NULL " +
+                            "  ON DELETE CASCADE " +
                             "  ON UPDATE CASCADE " +
                             ");";
 
     public final String DATABASE_NAME = "QuickAppt";
-    public final String DATABASE_TABLE = "titles";
     public final int DATABASE_VERSION = 1;
 
     /* IMPORTANT: update this array when adding new tables onto the database */
