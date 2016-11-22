@@ -18,4 +18,8 @@
     <string name="radioButton_patient">Patient</string>
     <string name="radioButton_physician">Physician</string>
 
+    <!-- Strings related to patient profile -->
+    <string name="lastName">Last name</string>
+    <string name="firstName">First name</string>
+
 </resources>
