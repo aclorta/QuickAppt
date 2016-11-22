@@ -20,15 +20,15 @@
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <!-- Home screen activity -->
-        <activity
-            android:name=".HomeScreen">
-        </activity>
-
+        <activity android:name=".HomeScreen" />
+        <activity android:name=".Patient_Profile" />
+        <activity android:name=".Physician_activity"></activity>
     </application>
 
 </manifest>
