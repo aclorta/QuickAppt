@@ -42,7 +42,7 @@
         </activity>
 
         <activity
-            android:name=".Physician_Activity">
+            android:name=".Physician_activity">
         </activity>
 
         <activity
